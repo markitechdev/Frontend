@@ -186,13 +186,18 @@ const load = async () => {
   finally { loading.value = false; }
 };
 
-const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
 
-const counts = computed(() => ({
-  all: rows.value.length,
-  low: rows.value.filter((r) => r.stock_status === 'low_stock').length,
-  out: rows.value.filter((r) => r.stock_status === 'out_of_stock').length,
-}));
+const counts = computed(() => {
+  if (loading.value) {
+    return { all: '--', low: '--', out: '--' };
+  }
+  return {
+    all: rows.value.length,
+    low: rows.value.filter((r) => r.stock_status === 'low_stock').length,
+    out: rows.value.filter((r) => r.stock_status === 'out_of_stock').length,
+  };
+});
 
 let t;
 watch(() => filters.search, () => { clearTimeout(t); t = setTimeout(load, 350); });

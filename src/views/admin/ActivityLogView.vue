@@ -46,7 +46,7 @@ onMounted(load);
     <div class="card">
       <div class="card-header">
         <h3 class="card-title">System Activity Log</h3>
-        <span class="text-xs text-slate-400">{{ rows.length }} entries (most recent first)</span>
+        <span class="text-xs text-slate-400">{{ loading ? '-- entries' : `${rows.length} entries (most recent first)` }}</span>
       </div>
       <div class="overflow-x-auto">
         <table class="table">

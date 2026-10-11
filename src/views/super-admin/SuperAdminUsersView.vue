@@ -110,9 +110,7 @@ onMounted(fetchUsers);
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
-        <span class="text-xs text-slate-500 dark:text-slate-400">
-          Showing {{ filteredUsers.length }} of {{ users.length }} users
-        </span>
+        <span class="text-xs text-slate-500 dark:text-slate-400">{{ loading ? 'Loading accounts...' : `Showing ${filteredUsers.length} of ${users.length} users` }}</span>
       </div>
 
       <!-- Loading Skeleton -->

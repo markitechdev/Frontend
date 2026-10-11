@@ -9,9 +9,9 @@ import StatusBadge from '@/components/ui/StatusBadge.vue';
 
 const toast = useToastStore();
 
-const summary = ref({});
-const movementSummary = ref({ byType: {}, shrinkage: { units: 0, value: 0 } });
-const alertSummary = ref({ total: 0, byType: {} });
+const summary = ref(null);
+const movementSummary = ref(null);
+const alertSummary = ref(null);
 const inventoryRows = ref([]);
 const loading = ref(true);
 const error = ref(null);
@@ -19,8 +19,8 @@ const error = ref(null);
 const range = reactive({ from: '', to: '' });
 const reportType = ref('stock_overview');
 
-const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
-const num  = (n) => Number(n || 0).toLocaleString();
+const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+const num  = (n) => (n === null || n === undefined || n === '') ? '--' : Number(n).toLocaleString();
 
 /** Groups current stock value by category, for the bar chart. */
 const byCategory = computed(() => {
@@ -125,7 +125,7 @@ onMounted(load);
                 :sublabel="`${num(summary.totalQuantity)} units`" tone="blue" />
       <StatCard label="Low Stock" :value="num(summary.lowStock)" tone="amber" />
       <StatCard label="Out of Stock" :value="num(summary.outOfStock)" tone="red" />
-      <StatCard label="Active Alerts" :value="num(alertSummary.total)" tone="red" />
+      <StatCard label="Active Alerts" :value="num(alertSummary?.total)" tone="red" />
     </div>
 
     <div class="card p-4 flex flex-wrap items-center gap-3">
@@ -241,9 +241,9 @@ onMounted(load);
           <div class="card-header"><h3 class="card-title">Shrinkage Summary</h3></div>
           <div class="card-body space-y-3 text-sm">
             <div class="flex justify-between"><span class="text-slate-500">Damaged units</span>
-              <span class="font-semibold">{{ movementSummary.byType?.damaged?.units || 0 }}</span></div>
+              <span class="font-semibold">{{ movementSummary?.byType?.damaged?.units != null ? movementSummary.byType.damaged.units : '--' }}</span></div>
             <div class="flex justify-between"><span class="text-slate-500">Missing units</span>
-              <span class="font-semibold">{{ movementSummary.byType?.missing?.units || 0 }}</span></div>
+              <span class="font-semibold">{{ movementSummary?.byType?.missing?.units != null ? movementSummary.byType.missing.units : '--' }}</span></div>
             <div class="flex justify-between pt-2 border-t border-slate-100">
               <span class="text-slate-700 font-medium">Estimated loss</span>
               <span class="font-bold text-red-600">{{ peso(movementSummary.shrinkage?.value) }}</span>

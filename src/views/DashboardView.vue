@@ -17,8 +17,8 @@ const data = computed(() => dashboardStore.data);
 const loading = computed(() => dashboardStore.loading && !dashboardStore.data);
 const error = computed(() => dashboardStore.error);
 
-const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const num  = (n) => Number(n || 0).toLocaleString();
+const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const num  = (n) => (n === null || n === undefined || n === '') ? '--' : Number(n).toLocaleString();
 const when = (d) => new Date(d).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 const cards   = computed(() => data.value?.cards ?? {});
@@ -132,7 +132,7 @@ onMounted(() => load(false));
                   label="Stock Value" :value="peso(cards.totalValue)" sublabel="Current inventory valuation" tone="green" />
         <StatCard v-if="cards.shrinkageUnits30d !== undefined"
                   label="Shrinkage (30d)" :value="num(cards.shrinkageUnits30d)"
-                  :sublabel="`${peso(cards.shrinkageValue30d)} lost`" tone="amber" />
+                  :sublabel="cards.shrinkageValue30d != null ? `${peso(cards.shrinkageValue30d)} lost` : '--'" tone="amber" />
         <StatCard v-if="cards.activeSuppliers !== undefined"
                   label="Active Suppliers" :value="num(cards.activeSuppliers)" tone="default" />
         <StatCard v-if="cards.totalUsers !== undefined"

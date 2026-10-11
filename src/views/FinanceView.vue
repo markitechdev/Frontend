@@ -5,12 +5,13 @@ import { useToastStore } from '@/stores/toast';
 import StatCard from '@/components/ui/StatCard.vue';
 
 const toast = useToastStore();
-const summary = ref({});
+const summary = ref(null);
 const rows = ref([]);
-const movementSummary = ref({ shrinkage: { units: 0, value: 0 } });
+const movementSummary = ref(null);
 const loading = ref(true);
 
-const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+const num = (n) => (n === null || n === undefined || n === '') ? '--' : Number(n).toLocaleString();
 
 const topByValue = computed(() =>
   [...rows.value]
@@ -47,11 +48,10 @@ onMounted(async () => {
     </div>
 
     <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
-      <StatCard label="Inventory Valuation" :value="peso(summary.totalValue)" sublabel="At current unit prices" tone="green" />
-      <StatCard label="Total Units" :value="Number(summary.totalQuantity || 0).toLocaleString()" tone="blue" />
-      <StatCard label="Capital in Low Stock" :value="summary.lowStock || 0" sublabel="Items at risk of stockout" tone="amber" />
-      <StatCard label="Shrinkage Loss" :value="peso(movementSummary.shrinkage?.value)"
-                :sublabel="`${movementSummary.shrinkage?.units || 0} units written off`" tone="red" />
+      <StatCard label="Inventory Valuation" :value="peso(summary?.totalValue)" sublabel="At current unit prices" tone="green" />
+      <StatCard label="Total Units" :value="num(summary?.totalQuantity)" tone="blue" />
+      <StatCard label="Capital in Low Stock" :value="num(summary?.lowStock)" sublabel="Items at risk of stockout" tone="amber" />
+      <StatCard label="Shrinkage Loss" :value="peso(movementSummary?.shrinkage?.value)" :sublabel="movementSummary?.shrinkage?.units != null ? `${num(movementSummary.shrinkage.units)} units written off` : '--'" tone="red" />
     </div>
 
     <div class="card">

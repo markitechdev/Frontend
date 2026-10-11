@@ -16,15 +16,12 @@ const error = computed(() => dashStore.error);
 const data = computed(() => dashStore.data);
 const stats = computed(() => dashStore.stats);
 
-const cards = computed(() => data.value?.cards || {});
-const panels = computed(() => data.value?.panels || {});
-
 const adminName = computed(() => {
   return auth.user?.fullName || auth.user?.name || 'Administrator';
 });
 
-const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const num = (n) => Number(n || 0).toLocaleString();
+const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const num = (n) => (n === null || n === undefined || n === '') ? '--' : Number(n).toLocaleString();
 const when = (d) => {
   if (!d) return '—';
   return new Date(d).toLocaleString('en-PH', {
@@ -35,8 +32,69 @@ const when = (d) => {
   });
 };
 
-const priorityCounts = computed(() => panels.value?.alertsByPriority || { critical: 0, high: 0, medium: 0, low: 0 });
+// Seamlessly normalize cards across backend payload structures
+const cards = computed(() => {
+  const d = data.value;
+  if (!d) return null;
+  const c = d.cards || {};
+  const inv = d.inventoryHealth || {};
+  const plat = d.platformOverview || {};
+  return {
+    totalProducts: c.totalProducts ?? inv.totalProducts,
+    totalValue: c.totalValue ?? inv.totalValuation,
+    totalQuantity: c.totalQuantity ?? inv.totalStockUnits,
+    lowStock: c.lowStock ?? inv.lowStockCount,
+    outOfStock: c.outOfStock ?? inv.outOfStockCount,
+    reorderDue: c.reorderDue ?? inv.lowStockCount,
+    activeSuppliers: c.activeSuppliers,
+    totalUsers: c.totalUsers ?? plat.totalUsers ?? stats.value?.totalUsers,
+    shrinkageUnits30d: c.shrinkageUnits30d ?? inv.shrinkageUnits30d,
+    shrinkageValue30d: c.shrinkageValue30d ?? inv.shrinkageValue30d,
+  };
+});
+
+// Telemetry banner normalized values
+const platformStatusDisplay = computed(() => {
+  if (loading.value && !data.value) return '--';
+  return stats.value?.platformStatus || data.value?.platformOverview?.platformStatus || 'Healthy';
+});
+
+const totalUsersCount = computed(() => {
+  if (stats.value?.totalUsers !== undefined && stats.value?.totalUsers !== null) return stats.value.totalUsers;
+  if (data.value?.platformOverview?.totalUsers !== undefined && data.value?.platformOverview?.totalUsers !== null) return data.value.platformOverview.totalUsers;
+  if (data.value?.cards?.totalUsers !== undefined && data.value?.cards?.totalUsers !== null) return data.value.cards.totalUsers;
+  return null;
+});
+
+const totalRolesCount = computed(() => {
+  if (stats.value?.totalRoles !== undefined && stats.value?.totalRoles !== null) return stats.value.totalRoles;
+  if (data.value?.platformOverview?.totalRoles !== undefined && data.value?.platformOverview?.totalRoles !== null) return data.value.platformOverview.totalRoles;
+  return null;
+});
+
+const totalAuditLogsCount = computed(() => {
+  if (stats.value?.totalAuditLogs !== undefined && stats.value?.totalAuditLogs !== null) return stats.value.totalAuditLogs;
+  if (data.value?.platformOverview?.totalAuditLogs !== undefined && data.value?.platformOverview?.totalAuditLogs !== null) return data.value.platformOverview.totalAuditLogs;
+  return null;
+});
+
+const priorityCounts = computed(() => {
+  const d = data.value;
+  if (!d) return null;
+  if (d.panels?.alertsByPriority) return d.panels.alertsByPriority;
+  if (d.platformOverview) {
+    return {
+      critical: d.platformOverview.criticalAlertsCount ?? 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+    };
+  }
+  return null;
+});
+
 const priorityTotal = computed(() => {
+  if (!priorityCounts.value) return null;
   const p = priorityCounts.value;
   return (p.critical || 0) + (p.high || 0) + (p.medium || 0) + (p.low || 0);
 });
@@ -51,6 +109,41 @@ const priorityBarWidth = (count) => {
   const rawPct = (count / priorityTotal.value) * 100;
   return `${Math.max(rawPct, 8)}%`;
 };
+
+// Attention items normalized
+const attentionItems = computed(() => {
+  const d = data.value;
+  if (!d) return null;
+  if (d.panels?.lowStockItems) return d.panels.lowStockItems;
+  if (d.itemsNeedingAttention?.outOfStockItems) {
+    return d.itemsNeedingAttention.outOfStockItems.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      sku: item.sku,
+      currentStock: 0,
+      reorderPoint: '—',
+      status: 'out_of_stock',
+    }));
+  }
+  return [];
+});
+
+// Recent movements normalized
+const recentMovements = computed(() => {
+  const d = data.value;
+  if (!d) return null;
+  if (d.panels?.recentMovements) return d.panels.recentMovements;
+  if (d.recentAdministrativeActivity) {
+    return d.recentAdministrativeActivity.map((log) => ({
+      movement_id: log.logId,
+      product: { product_name: log.action?.replace(/_/g, ' '), sku: log.entityType },
+      movement_type: log.action?.toLowerCase().includes('delete') ? 'out' : 'in',
+      quantity: 1,
+      date_created: log.createdAt,
+    }));
+  }
+  return [];
+});
 
 const onRefresh = () => {
   dashStore.fetchDashboard(true).catch(() => {});
@@ -138,25 +231,25 @@ onMounted(() => {
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Platform Status</span>
         <p class="text-base font-bold text-emerald-400 flex items-center gap-1.5 mt-0.5">
           <span class="w-2 h-2 rounded-full bg-emerald-500" />
-          {{ stats?.platformStatus || 'Healthy' }}
+          {{ platformStatusDisplay }}
         </p>
       </div>
       <div class="px-3 py-2 border-r border-slate-800 last:border-0">
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Users</span>
         <p class="text-base font-bold text-white mt-0.5">
-          {{ stats?.totalUsers || cards?.totalUsers || '—' }}
+          {{ num(totalUsersCount) }}
         </p>
       </div>
       <div class="px-3 py-2 border-r border-slate-800 last:border-0">
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Global Roles</span>
         <p class="text-base font-bold text-white mt-0.5">
-          {{ stats?.totalRoles || '5' }}
+          {{ num(totalRolesCount) }}
         </p>
       </div>
       <div class="px-3 py-2">
         <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Audit Journal</span>
         <p class="text-base font-bold text-indigo-300 mt-0.5">
-          {{ stats?.totalAuditLogs || '—' }} records
+          {{ totalAuditLogsCount !== null && totalAuditLogsCount !== undefined ? `${num(totalAuditLogsCount)} records` : '--' }}
         </p>
       </div>
     </div>
@@ -189,7 +282,7 @@ onMounted(() => {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Catalog Products"
-          :value="cards?.totalProducts ?? 0"
+          :value="num(cards?.totalProducts)"
           subtitle="Active platform SKUs"
           icon="▦"
         />
@@ -207,34 +300,34 @@ onMounted(() => {
         />
         <StatCard
           title="Low Stock Alert"
-          :value="cards?.lowStock ?? 0"
+          :value="num(cards?.lowStock)"
           subtitle="Products below reorder threshold"
           icon="⚠"
           accent="warning"
         />
         <StatCard
           title="Out of Stock"
-          :value="cards?.outOfStock ?? 0"
+          :value="num(cards?.outOfStock)"
           subtitle="Depleted catalog items"
           icon="⛔"
           accent="danger"
         />
         <StatCard
           title="Reorder Due"
-          :value="cards?.reorderDue ?? 0"
+          :value="num(cards?.reorderDue)"
           subtitle="Suppliers pending PO action"
           icon="🔄"
           accent="info"
         />
         <StatCard
           title="Active Suppliers"
-          :value="cards?.activeSuppliers ?? 0"
+          :value="num(cards?.activeSuppliers)"
           subtitle="Verified vendor network"
           icon="⛟"
         />
         <StatCard
           title="Platform Users"
-          :value="cards?.totalUsers ?? stats?.totalUsers ?? 0"
+          :value="num(cards?.totalUsers)"
           subtitle="Authorized operational seats"
           icon="👥"
         />
@@ -250,7 +343,7 @@ onMounted(() => {
                 Alerts by Priority
               </h2>
               <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                {{ priorityTotal }} Active
+                {{ priorityTotal !== null ? `${priorityTotal} Active` : '--' }}
               </span>
             </div>
 
@@ -259,10 +352,13 @@ onMounted(() => {
               <div>
                 <div class="flex justify-between text-xs font-semibold mb-1">
                   <span class="text-rose-600 dark:text-rose-400">Critical</span>
-                  <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.critical || 0 }} ({{ priorityPct(priorityCounts.critical) }}%)</span>
+                  <span class="text-slate-700 dark:text-slate-300">
+                    {{ priorityCounts ? num(priorityCounts.critical) : '--' }}
+                    <template v-if="priorityCounts && priorityTotal > 0"> ({{ priorityPct(priorityCounts.critical) }}%)</template>
+                  </span>
                 </div>
                 <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div class="h-full bg-rose-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.critical) }" />
+                  <div class="h-full bg-rose-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts?.critical) }" />
                 </div>
               </div>
 
@@ -270,10 +366,13 @@ onMounted(() => {
               <div>
                 <div class="flex justify-between text-xs font-semibold mb-1">
                   <span class="text-amber-600 dark:text-amber-400">High</span>
-                  <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.high || 0 }} ({{ priorityPct(priorityCounts.high) }}%)</span>
+                  <span class="text-slate-700 dark:text-slate-300">
+                    {{ priorityCounts ? num(priorityCounts.high) : '--' }}
+                    <template v-if="priorityCounts && priorityTotal > 0"> ({{ priorityPct(priorityCounts.high) }}%)</template>
+                  </span>
                 </div>
                 <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div class="h-full bg-amber-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.high) }" />
+                  <div class="h-full bg-amber-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts?.high) }" />
                 </div>
               </div>
 
@@ -281,10 +380,13 @@ onMounted(() => {
               <div>
                 <div class="flex justify-between text-xs font-semibold mb-1">
                   <span class="text-blue-600 dark:text-blue-400">Medium</span>
-                  <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.medium || 0 }} ({{ priorityPct(priorityCounts.medium) }}%)</span>
+                  <span class="text-slate-700 dark:text-slate-300">
+                    {{ priorityCounts ? num(priorityCounts.medium) : '--' }}
+                    <template v-if="priorityCounts && priorityTotal > 0"> ({{ priorityPct(priorityCounts.medium) }}%)</template>
+                  </span>
                 </div>
                 <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div class="h-full bg-blue-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.medium) }" />
+                  <div class="h-full bg-blue-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts?.medium) }" />
                 </div>
               </div>
 
@@ -292,10 +394,13 @@ onMounted(() => {
               <div>
                 <div class="flex justify-between text-xs font-semibold mb-1">
                   <span class="text-slate-500 dark:text-slate-400">Low</span>
-                  <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.low || 0 }} ({{ priorityPct(priorityCounts.low) }}%)</span>
+                  <span class="text-slate-700 dark:text-slate-300">
+                    {{ priorityCounts ? num(priorityCounts.low) : '--' }}
+                    <template v-if="priorityCounts && priorityTotal > 0"> ({{ priorityPct(priorityCounts.low) }}%)</template>
+                  </span>
                 </div>
                 <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div class="h-full bg-slate-400 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.low) }" />
+                  <div class="h-full bg-slate-400 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts?.low) }" />
                 </div>
               </div>
             </div>
@@ -319,11 +424,11 @@ onMounted(() => {
               Attention Items & Stock Depletion
             </h2>
             <span class="text-xs text-slate-500 dark:text-slate-400">
-              {{ panels?.lowStockItems?.length || 0 }} flagged
+              {{ attentionItems !== null ? `${attentionItems.length} flagged` : '--' }}
             </span>
           </div>
 
-          <div v-if="!panels?.lowStockItems?.length" class="py-12 text-center text-slate-400 text-xs">
+          <div v-if="!attentionItems || !attentionItems.length" class="py-12 text-center text-slate-400 text-xs">
             No stock replenishment flags active at this time.
           </div>
 
@@ -340,7 +445,7 @@ onMounted(() => {
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr
-                  v-for="item in (panels?.lowStockItems || []).slice(0, 5)"
+                  v-for="item in (attentionItems || []).slice(0, 5)"
                   :key="item.productId"
                   class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
                 >
@@ -379,7 +484,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div v-if="!panels?.recentMovements?.length" class="py-12 text-center text-slate-400 text-xs">
+        <div v-if="!recentMovements || !recentMovements.length" class="py-12 text-center text-slate-400 text-xs">
           No recent stock ledger movements recorded.
         </div>
 
@@ -396,7 +501,7 @@ onMounted(() => {
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
               <tr
-                v-for="mov in (panels?.recentMovements || []).slice(0, 5)"
+                v-for="mov in (recentMovements || []).slice(0, 5)"
                 :key="mov.movement_id"
                 class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
               >

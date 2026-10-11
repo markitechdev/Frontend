@@ -53,7 +53,7 @@ onMounted(async () => {
     <div v-if="auth.can('users.view')" class="card">
       <div class="card-header">
         <h3 class="card-title">Active Personnel with System Access</h3>
-        <span class="text-xs text-slate-400">{{ users.length }} account(s)</span>
+        <span class="text-xs text-slate-400">{{ loading ? '-- account(s)' : `${users.length} account(s)` }}</span>
       </div>
       <div class="overflow-x-auto">
         <table class="table">

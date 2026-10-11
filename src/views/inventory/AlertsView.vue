@@ -11,7 +11,7 @@ const auth = useAuthStore();
 const toast = useToastStore();
 
 const alerts = ref([]);
-const summary = ref({ total: 0, byType: {}, byPriority: {} });
+const summary = ref(null);
 const loading = ref(true);
 const busy = ref(false);
 
@@ -58,7 +58,7 @@ const recheck = async () => {
 
 const openDetail = (a) => { detail.value = a; detailOpen.value = true; };
 
-const byType = computed(() => summary.value.byType || {});
+const byType = computed(() => summary.value?.byType || {});
 
 let t;
 watch(() => filters.search, () => { clearTimeout(t); t = setTimeout(load, 350); });
@@ -71,10 +71,10 @@ onMounted(load);
   <div class="space-y-5">
     <!-- summary cards -->
     <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
-      <StatCard label="Active Alerts" :value="summary.total" sublabel="Needing attention" tone="red" />
-      <StatCard label="Low Stock" :value="byType.low_stock || 0" tone="amber" />
-      <StatCard label="Out of Stock" :value="byType.out_of_stock || 0" tone="red" />
-      <StatCard label="Reorder Due" :value="byType.reorder || 0" tone="blue" />
+      <StatCard label="Active Alerts" :value="summary ? summary.total : null" sublabel="Needing attention" tone="red" />
+      <StatCard label="Low Stock" :value="summary ? (byType.low_stock ?? 0) : null" tone="amber" />
+      <StatCard label="Out of Stock" :value="summary ? (byType.out_of_stock ?? 0) : null" tone="red" />
+      <StatCard label="Reorder Due" :value="summary ? (byType.reorder ?? 0) : null" tone="blue" />
     </div>
 
     <!-- toolbar -->

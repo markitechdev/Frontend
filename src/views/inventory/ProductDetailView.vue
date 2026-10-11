@@ -12,7 +12,7 @@ const toast = useToastStore();
 const product = ref(null);
 const loading = ref(true);
 
-const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
 const when = (d) => new Date(d).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 const date = (d) => (d ? new Date(d).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }) : '—');
 
@@ -43,7 +43,7 @@ onMounted(async () => {
           </div>
           <div class="text-right">
             <p class="text-xs text-slate-500">Current stock</p>
-            <p class="text-3xl font-bold text-slate-900 tabular-nums">{{ product.inventory?.current_stock ?? 0 }}</p>
+            <p class="text-3xl font-bold text-slate-900 tabular-nums">{{ product.inventory?.current_stock ?? '--' }}</p>
             <p class="text-xs text-slate-400">{{ product.unit_of_measure }}</p>
           </div>
         </div>

@@ -81,7 +81,8 @@ onMounted(fetchTenants);
 
     <!-- Tenants Table -->
     <div v-else class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-      <div class="overflow-x-auto">
+      <div v-if="!tenants.length" class="py-16 text-center text-slate-400 text-xs">No client workspaces registered yet.</div>
+      <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 border-b border-slate-200 dark:border-slate-800">
             <tr>

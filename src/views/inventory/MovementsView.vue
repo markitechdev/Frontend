@@ -8,12 +8,12 @@ import StatusBadge from '@/components/ui/StatusBadge.vue';
 const toast = useToastStore();
 
 const rows = ref([]);
-const summary = ref({ byType: {}, shrinkage: { units: 0, value: 0 }, totalMovements: 0 });
+const summary = ref(null);
 const loading = ref(true);
 const filters = reactive({ type: '', from: '', to: '' });
 
 const when = (d) => new Date(d).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
-const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
 
 const load = async () => {
   loading.value = true;
@@ -35,11 +35,10 @@ onMounted(load);
 <template>
   <div class="space-y-5">
     <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
-      <StatCard label="Total Movements" :value="summary.totalMovements" tone="blue" />
-      <StatCard label="Stock In" :value="summary.byType?.stock_in?.units || 0" sublabel="units received" tone="green" />
-      <StatCard label="Stock Out" :value="summary.byType?.stock_out?.units || 0" sublabel="units issued" tone="default" />
-      <StatCard label="Shrinkage" :value="summary.shrinkage?.units || 0"
-                :sublabel="`${peso(summary.shrinkage?.value)} — damaged + missing`" tone="red" />
+      <StatCard label="Total Movements" :value="summary ? (summary.totalMovements ?? 0) : null" tone="blue" />
+      <StatCard label="Stock In" :value="summary ? (summary.byType?.stock_in?.units ?? 0) : null" sublabel="units received" tone="green" />
+      <StatCard label="Stock Out" :value="summary ? (summary.byType?.stock_out?.units ?? 0) : null" sublabel="units issued" tone="default" />
+      <StatCard label="Shrinkage" :value="summary ? (summary.shrinkage?.units ?? 0) : null" :sublabel="summary?.shrinkage?.value != null ? `${peso(summary.shrinkage.value)} — damaged + missing` : '--'" tone="red" />
     </div>
 
     <div class="card p-4 flex flex-wrap items-center gap-3">
@@ -66,7 +65,7 @@ onMounted(load);
     <div class="card">
       <div class="card-header">
         <h3 class="card-title">Stock Movement Ledger</h3>
-        <span class="text-xs text-slate-400">{{ rows.length }} record(s)</span>
+        <span class="text-xs text-slate-400">{{ loading ? '-- record(s)' : `${rows.length} record(s)` }}</span>
       </div>
       <div class="overflow-x-auto">
         <table class="table">
