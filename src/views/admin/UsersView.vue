@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { usersApi, rolesApi } from '@/api';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
@@ -85,10 +85,33 @@ const toggleActive = async (u) => {
   } catch (e) { toast.error(e.message); }
 };
 
-const remove = async (u) => {
-  if (!confirm(`Permanently delete the account for ${u.full_name}? This cannot be undone.`)) return;
-  try { await usersApi.remove(u.user_id); toast.success('Account deleted.'); await load(); }
-  catch (e) { toast.error(e.message); }
+const deleteModal = ref(false);
+const deleteTarget = ref(null);
+const deleting = ref(false);
+
+const availableRoles = computed(() => {
+  return roles.value.filter((r) => r.roleCode !== 'super_admin' || auth.isSuperAdmin);
+});
+
+const confirmDelete = (u) => {
+  deleteTarget.value = u;
+  deleteModal.value = true;
+};
+
+const executeDelete = async () => {
+  if (!deleteTarget.value) return;
+  deleting.value = true;
+  try {
+    await usersApi.remove(deleteTarget.value.user_id);
+    toast.success('Account deleted.');
+    deleteModal.value = false;
+    deleteTarget.value = null;
+    await load();
+  } catch (e) {
+    toast.error(e.message);
+  } finally {
+    deleting.value = false;
+  }
 };
 
 const openPassword = (u) => { pwTarget.value = u; newPassword.value = ''; pwModal.value = true; };
@@ -161,7 +184,7 @@ onMounted(async () => {
                   <button class="btn-ghost btn-sm mr-1" @click="toggleActive(u)">
                     {{ u.is_active ? 'Disable' : 'Enable' }}
                   </button>
-                  <button class="btn-ghost btn-sm text-red-600" @click="remove(u)">Delete</button>
+                  <button class="btn-ghost btn-sm text-red-600" @click="confirmDelete(u)">Delete</button>
                 </template>
                 <span v-else class="text-xs text-slate-400">View only</span>
               </td>
@@ -191,7 +214,7 @@ onMounted(async () => {
           <div>
             <label class="label">Role *</label>
             <select v-model="form.roleId" class="select">
-              <option v-for="r in roles" :key="r.roleId" :value="r.roleId">{{ r.roleName }}</option>
+              <option v-for="r in availableRoles" :key="r.roleId" :value="r.roleId">{{ r.roleName }}</option>
             </select>
           </div>
           <div><label class="label">Position</label><input v-model="form.position" class="input" /></div>
@@ -223,6 +246,27 @@ onMounted(async () => {
         <button class="btn-ghost" @click="pwModal = false">Cancel</button>
         <button class="btn-primary" :disabled="saving || newPassword.length < 8" @click="savePassword">
           {{ saving ? 'Saving…' : 'Reset password' }}
+        </button>
+      </template>
+    </ModalDialog>
+<!-- delete confirmation modal -->
+    <ModalDialog :open="deleteModal" title="Delete User Account" size="sm" @close="deleteModal = false">
+      <div class="space-y-3">
+        <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+          <p class="font-semibold">Destructive Action</p>
+          <p class="mt-1">
+            Permanently delete the user account for
+            <span class="font-bold underline">{{ deleteTarget?.full_name }}</span>?
+          </p>
+          <p class="mt-2 text-xs text-red-700">
+            This cannot be undone. Active login sessions for this account will be terminated immediately.
+          </p>
+        </div>
+      </div>
+      <template #footer>
+        <button class="btn-ghost" :disabled="deleting" @click="deleteModal = false">Cancel</button>
+        <button class="btn-danger" :disabled="deleting" @click="executeDelete">
+          {{ deleting ? 'Deleting…' : 'Delete Account' }}
         </button>
       </template>
     </ModalDialog>

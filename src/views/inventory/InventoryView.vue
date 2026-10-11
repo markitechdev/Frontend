@@ -89,13 +89,29 @@ const saveProduct = async () => {
   }
 };
 
-const removeProduct = async (row) => {
-  if (!confirm(`Delete "${row.product.product_name}"? Its stock movement history will be removed too.`)) return;
+const deleteModal = ref(false);
+const deleteTarget = ref(null);
+const deleting = ref(false);
+
+const confirmDelete = (row) => {
+  deleteTarget.value = row;
+  deleteModal.value = true;
+};
+
+const executeDelete = async () => {
+  if (!deleteTarget.value) return;
+  deleting.value = true;
   try {
-    await productsApi.remove(row.product.product_id);
-    toast.success('Product deleted.');
+    await productsApi.remove(deleteTarget.value.product.product_id);
+    toast.success(`Product "${deleteTarget.value.product.product_name}" deleted.`);
+    deleteModal.value = false;
+    deleteTarget.value = null;
     await load();
-  } catch (e) { toast.error(e.message); }
+  } catch (e) {
+    toast.error(e.message);
+  } finally {
+    deleting.value = false;
+  }
 };
 
 /* ---------------------------------------------------------- stock movement */
@@ -231,7 +247,7 @@ onMounted(async () => {
               <td class="text-right whitespace-nowrap">
                 <button v-if="auth.can('movements.create')" class="btn-ghost btn-sm mr-1" @click="openMovement(r)">Stock</button>
                 <button v-if="auth.can('products.update')" class="btn-ghost btn-sm mr-1" @click="openEdit(r)">Edit</button>
-                <button v-if="auth.can('products.delete')" class="btn-ghost btn-sm text-red-600" @click="removeProduct(r)">Delete</button>
+                <button v-if="auth.can('products.delete')" class="btn-ghost btn-sm text-red-600" @click="confirmDelete(r)">Delete</button>
               </td>
             </tr>
           </tbody>
@@ -355,6 +371,28 @@ onMounted(async () => {
         <button class="btn-ghost" @click="moveModal = false">Cancel</button>
         <button class="btn-primary" :disabled="saving" @click="submitMovement">
           {{ saving ? 'Recording…' : 'Record movement' }}
+        </button>
+      </template>
+    </ModalDialog>
+<!-- delete confirmation modal -->
+    <ModalDialog :open="deleteModal" title="Delete Product" size="sm" @close="deleteModal = false">
+      <div class="space-y-3">
+        <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
+          <p class="font-semibold">Destructive Action</p>
+          <p class="mt-1">
+            Permanently delete product
+            <span class="font-bold underline">{{ deleteTarget?.product?.product_name }}</span>
+            <span class="font-mono text-xs text-red-700"> ({{ deleteTarget?.product?.sku }})</span>?
+          </p>
+          <p class="mt-2 text-xs text-red-700">
+            This action cannot be undone. All related movement history and inventory records will be permanently erased.
+          </p>
+        </div>
+      </div>
+      <template #footer>
+        <button class="btn-ghost" :disabled="deleting" @click="deleteModal = false">Cancel</button>
+        <button class="btn-danger" :disabled="deleting" @click="executeDelete">
+          {{ deleting ? 'Deleting…' : 'Delete Product' }}
         </button>
       </template>
     </ModalDialog>
