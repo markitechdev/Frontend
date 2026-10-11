@@ -14,6 +14,12 @@ const routes = [
     component: () => import('@/views/auth/LoginView.vue'),
     meta: { public: true, layout: 'blank', title: 'Sign In' },
   },
+  {
+    path: '/super-admin/login',
+    name: 'super-admin-login',
+    component: () => import('@/views/super-admin/SuperAdminLoginView.vue'),
+    meta: { public: true, layout: 'blank', title: 'Super Admin Sign In' },
+  },
 
   {
     path: '/',

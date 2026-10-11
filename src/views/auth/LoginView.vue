@@ -17,7 +17,6 @@ const errors = reactive({ email: '', password: '' });
 // Demo credentials guarded exclusively for development environment
 const isDev = Boolean(import.meta.env.DEV);
 const DEMO = isDev ? [
-  { role: 'Super Admin',     email: 'superadmin@ims.local', password: 'SuperAdmin123!' },
   { role: 'Warehouse Admin', email: 'warehouse@ims.local',  password: 'Warehouse123!'  },
   { role: 'Staff Admin',     email: 'staff@ims.local',      password: 'StaffAdmin123!' },
   { role: 'Finance Admin',   email: 'finance@ims.local',    password: 'Finance123!'    },
@@ -265,8 +264,13 @@ const submit = async () => {
           </div>
         </div>
 
-        <div class="mt-8 text-center text-xs text-slate-400">
-          Protected by role-based identity checks and session token verification.
+        <div class="mt-8 text-center space-y-2 text-xs text-slate-400">
+          <p>Protected by role-based identity checks and session token verification.</p>
+          <p>
+            <RouterLink to="/super-admin/login" class="text-slate-500 hover:text-navy-700 underline font-medium">
+              Platform Administration Console
+            </RouterLink>
+          </p>
         </div>
       </div>
     </div>
