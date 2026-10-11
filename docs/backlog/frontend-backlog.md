@@ -2,7 +2,7 @@
 
 **Author:** jhnyz (Project Manager)  
 **Target Repository:** Frontend (`markitechdev/Frontend`)  
-**Status:** Approved for Backlog Scheduling  
+**Status:** FOR QA (Implementation Complete)  
 **Date:** 2026-10-11  
 
 ---
@@ -13,7 +13,7 @@
 - **Repository:** Frontend
 - **Priority:** P1
 - **Owner:** Frontend Developer
-- **Status:** Backlog
+- **Status:** FOR QA
 - **Dependencies:** None
 - **Acceptance Criteria:**
   - Demo accounts panel is only rendered when `import.meta.env.DEV` evaluates to true.
@@ -30,7 +30,7 @@
 - **Repository:** Frontend
 - **Priority:** P1
 - **Owner:** Frontend Developer
-- **Status:** Backlog
+- **Status:** FOR QA
 - **Dependencies:** Backend Permission Endpoints
 - **Acceptance Criteria:**
   - Application calls `authStore.refreshProfile()` on startup to re-sync claims from server.
@@ -46,7 +46,7 @@
 - **Repository:** Frontend
 - **Priority:** P1
 - **Owner:** Frontend Developer
-- **Status:** Backlog
+- **Status:** FOR QA
 - **Dependencies:** None
 - **Acceptance Criteria:**
   - Modal action buttons disable immediately upon click during asynchronous mutations.
@@ -62,7 +62,7 @@
 - **Repository:** Frontend
 - **Priority:** P1
 - **Owner:** Frontend Developer
-- **Status:** Backlog
+- **Status:** FOR QA
 - **Dependencies:** None
 - **Acceptance Criteria:**
   - Viewports below 1024px display a hamburger menu icon in `AppTopbar.vue`.
@@ -78,7 +78,7 @@
 - **Repository:** Frontend
 - **Priority:** P2
 - **Owner:** Frontend Developer
-- **Status:** Backlog
+- **Status:** FOR QA
 - **Dependencies:** None
 - **Acceptance Criteria:**
   - Returning to `/dashboard` renders cached data instantly without full-screen loading placeholder.
@@ -95,7 +95,7 @@
 - **Repository:** Frontend
 - **Priority:** P2
 - **Owner:** Frontend Developer
-- **Status:** Backlog
+- **Status:** FOR QA
 - **Dependencies:** None
 - **Acceptance Criteria:**
   - Pulse-animated skeleton loaders replace plaintext "Loading..." placeholders across views.
@@ -111,7 +111,7 @@
 - **Repository:** Frontend
 - **Priority:** P2
 - **Owner:** Frontend Developer
-- **Status:** Backlog
+- **Status:** FOR QA
 - **Dependencies:** None
 - **Acceptance Criteria:**
   - Hovering on horizontal bars displays interactive tooltip with values, counts, and percentage shares.
@@ -128,7 +128,7 @@
 - **Repository:** Frontend
 - **Priority:** P2
 - **Owner:** Frontend Developer
-- **Status:** Backlog
+- **Status:** FOR QA
 - **Dependencies:** None
 - **Acceptance Criteria:**
   - Route guards use `router.replace({ name: 'forbidden' })` instead of push.
@@ -144,7 +144,7 @@
 - **Repository:** Frontend
 - **Priority:** P3
 - **Owner:** Frontend Developer
-- **Status:** Backlog
+- **Status:** FOR QA
 - **Dependencies:** Task FE-04
 - **Acceptance Criteria:**
   - Replace all native `window.confirm()` calls with `ModalDialog.vue` danger dialogs.
