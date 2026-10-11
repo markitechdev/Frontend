@@ -40,6 +40,20 @@ const MODULE_LABEL = {
   staff:     'Staff Operations',
 };
 
+const getRoleIcon = (role) => {
+  if (role?.icon) return role.icon;
+  const c = (role?.roleCode || '').toLowerCase();
+  if (c === 'super_admin') return '🛡️';
+  if (c === 'staff_admin' || c === 'admin') return '⚙️';
+  if (c.includes('manager')) return '🧭';
+  if (c.includes('warehouse')) return '📦';
+  if (c.includes('purchas')) return '🛒';
+  if (c.includes('analyst')) return '📊';
+  if (c.includes('audit')) return '🔍';
+  if (c === 'staff' || c === 'user') return '👤';
+  return '🧩';
+};
+
 const roleBadge = (code) => ({
   super_admin:     'badge-purple',
   warehouse_admin: 'badge-blue',
@@ -184,7 +198,7 @@ onMounted(load);
         <div class="card-header">
           <div class="min-w-0">
             <div class="flex items-center gap-2 flex-wrap">
-              <h3 class="card-title text-base">{{ role.roleName }}</h3>
+              <h3 class="card-title text-base flex items-center gap-1.5 font-bold text-slate-900"><span>{{ getRoleIcon(role) }}</span><span>{{ role.roleName }}</span></h3>
               <span :class="roleBadge(role.roleCode)">{{ role.roleCode }}</span>
               <span v-if="role.isSystem" class="badge-gray">system</span>
             </div>
