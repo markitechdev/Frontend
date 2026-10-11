@@ -1,8 +1,10 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { inventoryApi, productsApi, categoriesApi, suppliersApi, movementsApi } from '@/api';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
+import { useDashboardStore } from '@/stores/dashboard';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import ModalDialog from '@/components/ui/ModalDialog.vue';
 import TableSkeleton from '@/components/ui/TableSkeleton.vue';
@@ -15,7 +17,26 @@ const categories = ref([]);
 const suppliers = ref([]);
 const loading = ref(true);
 
-const filters = reactive({ search: '', status: '', categoryId: '' });
+const filters = reactive({
+  search: (route.query.search || '').toString(),
+  status: (route.query.status || '').toString(),
+  categoryId: (route.query.categoryId || '').toString(),
+});
+
+const syncQuery = () => {
+  const query = {};
+  if (filters.search) query.search = filters.search;
+  if (filters.status) query.status = filters.status;
+  if (filters.categoryId) query.categoryId = filters.categoryId;
+  router.replace({ query });
+};
+
+const clearFilters = () => {
+  filters.search = '';
+  filters.status = '';
+  filters.categoryId = '';
+  syncQuery();
+};
 
 /* ------------------------------------------------------------ product form */
 const productModal = ref(false);
@@ -77,9 +98,11 @@ const saveProduct = async () => {
     if (editingId.value) {
       await productsApi.update(editingId.value, payload);
       toast.success('Product updated.');
+    dashboardStore.invalidate();
     } else {
       await productsApi.create({ ...payload, currentStock: Number(form.currentStock) });
       toast.success('Product added.');
+    dashboardStore.invalidate();
     }
     productModal.value = false;
     await load();
@@ -105,6 +128,7 @@ const executeDelete = async () => {
   try {
     await productsApi.remove(deleteTarget.value.product.product_id);
     toast.success(`Product "${deleteTarget.value.product.product_name}" deleted.`);
+    dashboardStore.invalidate();
     deleteModal.value = false;
     deleteTarget.value = null;
     await load();
@@ -140,6 +164,7 @@ const submitMovement = async () => {
       referenceNo: moveForm.referenceNo || null,
     });
     toast.success('Stock movement recorded.');
+    dashboardStore.invalidate();
     moveModal.value = false;
     await load();
   } catch (e) {

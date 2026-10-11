@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { dashboardApi } from '@/api';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
+import { useDashboardStore } from '@/stores/dashboard';
 import StatCard from '@/components/ui/StatCard.vue';
 import StatCardSkeleton from '@/components/ui/StatCardSkeleton.vue';
 import Skeleton from '@/components/ui/Skeleton.vue';
@@ -27,14 +28,15 @@ const priorityTotal = computed(() => {
   return (p.critical || 0) + (p.high || 0) + (p.medium || 0) + (p.low || 0);
 });
 
-const load = async () => {
-  loading.value = true;
-  try { data.value = await dashboardApi.get(); }
-  catch (e) { toast.error(e.message); }
-  finally { loading.value = false; }
+const load = async (force = false) => {
+  try {
+    await dashboardStore.fetchDashboard(force);
+  } catch (e) {
+    toast.error(dashboardStore.error || e.message);
+  }
 };
 
-onMounted(load);
+onMounted(() => load(false));
 </script>
 
 <template>
@@ -45,8 +47,8 @@ onMounted(load);
         <h2 class="text-xl font-bold text-slate-900">{{ auth.roleName }} Dashboard</h2>
         <p class="text-sm text-slate-500">Welcome back, {{ auth.user?.fullName }}.</p>
       </div>
-      <button class="btn-ghost btn-sm" :disabled="loading" @click="load">
-        {{ loading ? 'Refreshing…' : 'Refresh' }}
+      <button class="btn-ghost btn-sm" :disabled="dashboardStore.loading" @click="load(true)">
+        {{ dashboardStore.loading ? 'Refreshing…' : 'Refresh' }}
       </button>
     </div>
 

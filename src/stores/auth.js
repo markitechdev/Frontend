@@ -1,6 +1,7 @@
 ﻿import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authApi } from '@/api';
+import { useDashboardStore } from './dashboard';
 
 const TOKEN_KEY = 'ims_access_token';
 const USER_KEY  = 'ims_user';
@@ -65,6 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
     try { if (token.value) await authApi.logout(); } catch { /* ignore */ }
     persist(null, null);
     verified.value = false;
+    useDashboardStore().invalidate();
   };
 
   /** Re-reads profile from server to guarantee true verified claims and prevent client-side tampering. */
@@ -89,6 +91,7 @@ export const useAuthStore = defineStore('auth', () => {
   const clearSession = () => {
     persist(null, null);
     verified.value = false;
+    useDashboardStore().invalidate();
   };
 
   return {
