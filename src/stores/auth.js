@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia';
+﻿import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authApi } from '@/api';
 
@@ -6,20 +6,35 @@ const TOKEN_KEY = 'ims_access_token';
 const USER_KEY  = 'ims_user';
 
 export const useAuthStore = defineStore('auth', () => {
-  const user    = ref(JSON.parse(localStorage.getItem(USER_KEY) || 'null'));
-  const token   = ref(localStorage.getItem(TOKEN_KEY) || null);
-  const loading = ref(false);
-  const error   = ref(null);
+  const user      = ref(JSON.parse(localStorage.getItem(USER_KEY) || 'null'));
+  const token     = ref(localStorage.getItem(TOKEN_KEY) || null);
+  const loading   = ref(false);
+  const error     = ref(null);
+  const verified  = ref(false);
 
   const isAuthenticated = computed(() => Boolean(token.value && user.value));
-  const roleCode = computed(() => user.value?.role?.role_code ?? null);
-  const roleName = computed(() => user.value?.role?.role_name ?? '');
+  const isSuperAdmin    = computed(() =>
+    user.value?.role?.role_code === 'super_admin' || user.value?.isSuperAdmin === true
+  );
+  const roleCode    = computed(() => user.value?.role?.role_code ?? null);
+  const roleName    = computed(() => user.value?.role?.role_name ?? '');
   const permissions = computed(() => user.value?.permissions ?? []);
 
-  /** True when the signed-in role holds every listed permission. */
-  const can = (...codes) => codes.every((c) => permissions.value.includes(c));
-  /** True when the signed-in role holds at least one listed permission. */
-  const canAny = (...codes) => codes.some((c) => permissions.value.includes(c));
+  // SaaS Tenant & Account boundaries
+  const tenantId    = computed(() => user.value?.tenantId || user.value?.organizationId || 'default-org');
+  const tenantName  = computed(() => user.value?.tenantName || user.value?.organizationName || 'Primary Workspace');
+
+  /** True when the signed-in role holds every listed permission or is Super Admin. */
+  const can = (...codes) => {
+    if (isSuperAdmin.value) return true;
+    return codes.every((c) => permissions.value.includes(c));
+  };
+
+  /** True when the signed-in role holds at least one listed permission or is Super Admin. */
+  const canAny = (...codes) => {
+    if (isSuperAdmin.value) return true;
+    return codes.some((c) => permissions.value.includes(c));
+  };
 
   const persist = (nextUser, nextToken) => {
     user.value = nextUser;
@@ -36,6 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const result = await authApi.login(email, password);
       persist(result.user, result.session.accessToken);
+      verified.value = true;
       return result.user;
     } catch (e) {
       error.value = e.message;
@@ -48,27 +64,37 @@ export const useAuthStore = defineStore('auth', () => {
   const logout = async () => {
     try { if (token.value) await authApi.logout(); } catch { /* ignore */ }
     persist(null, null);
+    verified.value = false;
   };
 
-  /** Re-reads the profile so permission changes take effect without re-login. */
+  /** Re-reads profile from server to guarantee true verified claims and prevent client-side tampering. */
   const refreshProfile = async () => {
-    if (!token.value) return null;
+    if (!token.value) {
+      verified.value = false;
+      return null;
+    }
     try {
       const me = await authApi.me();
       persist({ ...me, id: me.id }, token.value);
+      verified.value = true;
       return me;
     } catch {
       persist(null, null);
+      verified.value = false;
       return null;
     }
   };
 
-  /** Drops the session locally. Called on sign-out and on any 401. */
-  const clearSession = () => persist(null, null);
+  /** Drops session locally. Called on sign-out and on 401. */
+  const clearSession = () => {
+    persist(null, null);
+    verified.value = false;
+  };
 
   return {
-    user, token, loading, error,
-    isAuthenticated, roleCode, roleName, permissions,
+    user, token, loading, error, verified,
+    isAuthenticated, isSuperAdmin, roleCode, roleName, permissions,
+    tenantId, tenantName,
     can, canAny, login, logout, refreshProfile, clearSession,
   };
 });

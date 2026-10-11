@@ -1,28 +1,46 @@
-import { createApp } from 'vue';
+﻿import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
 import { useAuthStore } from './stores/auth';
-import { setUnauthorizedHandler } from './api/client';
+import { setUnauthorizedHandler, setForbiddenHandler } from './api/client';
 import './assets/main.css';
 
 const app = createApp(App);
-app.use(createPinia());
+const pinia = createPinia();
+app.use(pinia);
 app.use(router);
 
+const auth = useAuthStore();
+
 /**
- * A 401 from any request means the session is no longer valid - most often
- * because the access token expired while the tab was open. Clear it AND send
- * the user back to sign in; otherwise they are left on a page whose data can
- * never load.
+ * Re-validate profile and permissions on startup to prevent client-side localStorage tampering.
+ * Server claims always override any local modification.
+ */
+if (auth.token) {
+  auth.refreshProfile().catch(() => {});
+}
+
+/**
+ * A 401 from any request means the session is no longer valid or has been revoked.
+ * Clear session state and redirect user cleanly to sign in.
  */
 setUnauthorizedHandler(() => {
-  const auth = useAuthStore();
   auth.clearSession();
-
   const current = router.currentRoute.value;
   if (!current.meta.public) {
     router.replace({ name: 'login', query: { redirect: current.fullPath } });
+  }
+});
+
+/**
+ * A 403 Forbidden means backend authorization denied access to the requested resource.
+ * Redirect cleanly to forbidden view without trapping navigation history.
+ */
+setForbiddenHandler(() => {
+  const current = router.currentRoute.value;
+  if (current.name !== 'forbidden') {
+    router.replace({ name: 'forbidden' });
   }
 });
 
