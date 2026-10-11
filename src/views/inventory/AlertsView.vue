@@ -70,6 +70,36 @@ onMounted(load);
 <template>
   <div class="space-y-5">
     <!-- summary cards -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 mb-5">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-bold tracking-widest text-sky-600 uppercase">
+            Threshold Telemetry
+          </span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-800 border border-rose-200">
+            Real-Time Monitor
+          </span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 mt-1">
+          Active Inventory Alerts &amp; Reorders
+        </h1>
+        <p class="text-xs text-slate-500 mt-0.5">
+          Priority-ranked notifications for stock depletion, reorder thresholds, and expiration flags.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button
+          v-if="auth.can('alerts.manage')"
+          class="btn-primary btn-sm"
+          :disabled="busy"
+          @click="recheck"
+        >
+          {{ busy ? 'Evaluating…' : '⚡ Recheck Threshold Rules' }}
+        </button>
+      </div>
+    </div>
+
     <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
       <StatCard label="Active Alerts" :value="summary ? summary.total : null" sublabel="Needing attention" tone="red" />
       <StatCard label="Low Stock" :value="summary ? (byType.low_stock ?? 0) : null" tone="amber" />

@@ -27,6 +27,21 @@ const pwModal = ref(false);
 const pwTarget = ref(null);
 const newPassword = ref('');
 
+const getRoleDisplay = (code, name) => {
+  const c = (code || '').toLowerCase();
+  let icon = '👤';
+  if (c === 'super_admin') icon = '🛡️';
+  else if (c === 'staff_admin' || c === 'admin') icon = '⚙️';
+  else if (c.includes('manager')) icon = '🧭';
+  else if (c.includes('warehouse')) icon = '📦';
+  else if (c.includes('purchas')) icon = '🛒';
+  else if (c.includes('analyst')) icon = '📊';
+  else if (c.includes('audit')) icon = '🔍';
+  else if (c === 'staff' || c === 'user') icon = '👤';
+  else if (c) icon = '🧩';
+  return { icon, text: name || (code ? code.toUpperCase() : 'Staff') };
+};
+
 const roleBadge = (code) => ({
   super_admin: 'badge-purple', warehouse_admin: 'badge-blue',
   staff_admin: 'badge-amber', finance_admin: 'badge-green',

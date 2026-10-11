@@ -108,6 +108,32 @@ onMounted(load);
 
 <template>
   <div class="space-y-5">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-bold tracking-widest text-sky-600 uppercase">
+            Procurement Logistics
+          </span>
+          <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-sky-50 text-sky-800 border border-sky-200">
+            Active Partners
+          </span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 mt-1">
+          Suppliers &amp; Procurement Directory
+        </h1>
+        <p class="text-xs text-slate-500 mt-0.5">
+          Manage vendor contacts, authorized supply channels, and procurement partners.
+        </p>
+      </div>
+
+      <button
+        v-if="auth.can('suppliers.create')"
+        class="btn-primary btn-sm"
+        @click="openCreate"
+      >
+        <span>+ Add Supplier</span>
+      </button>
+    </div>
     <div class="card p-4 flex flex-wrap items-center gap-3 border-slate-200">
       <input
         v-model="filters.search"
