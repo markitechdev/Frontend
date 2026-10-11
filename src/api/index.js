@@ -28,7 +28,10 @@ export const superAdminApi = {
   roles: {
     list:        () => api.get('/super-admin/roles').then(unwrap),
     permissions: () => api.get('/super-admin/roles/permissions').then(unwrap),
+    get:         (id) => api.get(`/super-admin/roles/${id}`).then(unwrap),
+    getUsers:    (id) => api.get(`/super-admin/roles/${id}/users`).then(unwrap),
     create:      (body) => api.post('/super-admin/roles', body).then(unwrap),
+    update:      (id, body) => api.patch(`/super-admin/roles/${id}`, body).then(unwrap),
     setPermissions: (id, permissionIds) => api.put(`/super-admin/roles/${id}/permissions`, { permissionIds }).then(unwrap),
     remove:      (id) => api.delete(`/super-admin/roles/${id}`).then(unwrap),
   },
