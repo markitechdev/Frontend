@@ -27,7 +27,7 @@ const routes = [
     meta: { public: true, layout: 'blank', title: 'Super Admin Sign In' },
   },
 
-  // Dedicated Super Admin Dashboard
+  // Dedicated Super Admin Platform Routes
   {
     path: '/super-admin/dashboard',
     name: 'super-admin-dashboard',
@@ -36,6 +36,46 @@ const routes = [
       superAdmin: true,
       layout: 'super-admin',
       title: 'Platform Administration Dashboard',
+    },
+  },
+  {
+    path: '/super-admin/users',
+    name: 'super-admin-users',
+    component: () => import('@/views/super-admin/SuperAdminUsersView.vue'),
+    meta: {
+      superAdmin: true,
+      layout: 'super-admin',
+      title: 'Platform Users',
+    },
+  },
+  {
+    path: '/super-admin/roles',
+    name: 'super-admin-roles',
+    component: () => import('@/views/super-admin/SuperAdminRolesView.vue'),
+    meta: {
+      superAdmin: true,
+      layout: 'super-admin',
+      title: 'Platform Roles & Permissions',
+    },
+  },
+  {
+    path: '/super-admin/tenants',
+    name: 'super-admin-tenants',
+    component: () => import('@/views/super-admin/SuperAdminTenantsView.vue'),
+    meta: {
+      superAdmin: true,
+      layout: 'super-admin',
+      title: 'Client Tenants & Workspaces',
+    },
+  },
+  {
+    path: '/super-admin/logs',
+    name: 'super-admin-logs',
+    component: () => import('@/views/super-admin/SuperAdminLogsView.vue'),
+    meta: {
+      superAdmin: true,
+      layout: 'super-admin',
+      title: 'System Audit Logs',
     },
   },
 
@@ -195,7 +235,7 @@ router.beforeEach((to) => {
     return { name: 'login', query: { redirect: to.fullPath }, replace: true };
   }
 
-  // Super Admin possesses global administrative clearance across all routes
+  // Super Admin possessing global administrative clearance across all routes
   if (auth.isSuperAdmin) {
     return true;
   }
