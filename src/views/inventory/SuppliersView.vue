@@ -4,6 +4,7 @@ import { suppliersApi } from '@/api';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import ModalDialog from '@/components/ui/ModalDialog.vue';
+import TableSkeleton from '@/components/ui/TableSkeleton.vue';
 
 const auth = useAuthStore();
 const toast = useToastStore();
@@ -141,11 +142,9 @@ onMounted(load);
               <th class="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-if="loading">
-              <td colspan="7" class="text-center py-12 text-slate-400">Loading suppliers…</td>
-            </tr>
-            <tr v-else-if="!rows.length">
+          <TableSkeleton v-if="loading" :columns="7" :rows="5" />
+          <tbody v-else>
+            <tr v-if="!rows.length">
               <td colspan="7" class="text-center py-12 text-slate-400">No suppliers found.</td>
             </tr>
             <tr v-else v-for="s in rows" :key="s.supplier_id">

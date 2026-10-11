@@ -4,6 +4,8 @@ import { dashboardApi } from '@/api';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import StatCard from '@/components/ui/StatCard.vue';
+import StatCardSkeleton from '@/components/ui/StatCardSkeleton.vue';
+import Skeleton from '@/components/ui/Skeleton.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 
 const auth = useAuthStore();
@@ -11,6 +13,7 @@ const toast = useToastStore();
 
 const data = ref(null);
 const loading = ref(true);
+const error = ref(null);
 
 const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const num  = (n) => Number(n || 0).toLocaleString();
@@ -47,7 +50,54 @@ onMounted(load);
       </button>
     </div>
 
-    <div v-if="loading" class="text-center py-16 text-slate-400">Loading dashboard…</div>
+    <!-- loading skeleton state -->
+    <div v-if="loading" class="space-y-6">
+      <div class="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <StatCardSkeleton v-for="i in 5" :key="`sc-skel-${i}`" />
+      </div>
+      <div class="grid gap-4 lg:grid-cols-3">
+        <div class="card p-5 lg:col-span-2 space-y-4 border-slate-200">
+          <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+            <Skeleton width="180px" height="1.25rem" />
+            <Skeleton width="60px" height="0.875rem" />
+          </div>
+          <div class="space-y-3 pt-2">
+            <div v-for="j in 4" :key="`row-skel-${j}`" class="flex justify-between items-center py-2">
+              <Skeleton width="35%" height="1rem" />
+              <Skeleton width="20%" height="1rem" />
+              <Skeleton width="15%" height="1rem" />
+            </div>
+          </div>
+        </div>
+        <div class="card p-5 space-y-4 border-slate-200">
+          <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+            <Skeleton width="140px" height="1.25rem" />
+            <Skeleton width="50px" height="0.875rem" />
+          </div>
+          <div class="space-y-3 pt-2">
+            <div v-for="k in 4" :key="`bar-skel-${k}`" class="space-y-1.5 py-1">
+              <div class="flex justify-between">
+                <Skeleton width="60px" height="0.875rem" />
+                <Skeleton width="30px" height="0.875rem" />
+              </div>
+              <Skeleton width="100%" height="0.5rem" rounded="rounded-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- error state with retry -->
+    <div v-else-if="error" class="card p-8 border-red-200 bg-red-50/30 text-center space-y-3">
+      <div class="h-12 w-12 rounded-full bg-red-100 text-red-600 mx-auto grid place-items-center text-xl font-bold">
+        ⚠
+      </div>
+      <h3 class="text-base font-semibold text-slate-800">Failed to load dashboard metrics</h3>
+      <p class="text-sm text-slate-600 max-w-md mx-auto">{{ error }}</p>
+      <div class="pt-2">
+        <button class="btn-primary btn-sm" @click="load">Try Again</button>
+      </div>
+    </div>
 
     <template v-else>
       <!-- stat cards -->

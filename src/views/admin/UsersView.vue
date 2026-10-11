@@ -4,6 +4,7 @@ import { usersApi, rolesApi } from '@/api';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import ModalDialog from '@/components/ui/ModalDialog.vue';
+import TableSkeleton from '@/components/ui/TableSkeleton.vue';
 
 const auth = useAuthStore();
 const toast = useToastStore();
@@ -167,9 +168,9 @@ onMounted(async () => {
           <thead>
             <tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Position</th><th>Status</th><th class="text-right">Actions</th></tr>
           </thead>
-          <tbody>
-            <tr v-if="loading"><td colspan="7" class="text-center py-12 text-slate-400">Loading users…</td></tr>
-            <tr v-else-if="!users.length"><td colspan="7" class="text-center py-12 text-slate-400">No user accounts found.</td></tr>
+          <TableSkeleton v-if="loading" :columns="7" :rows="5" />
+          <tbody v-else>
+            <tr v-if="!users.length"><td colspan="7" class="text-center py-12 text-slate-400">No user accounts found.</td></tr>
             <tr v-else v-for="u in users" :key="u.user_id">
               <td class="font-medium text-slate-800">{{ u.full_name }}</td>
               <td class="font-mono text-xs text-slate-500">{{ u.username }}</td>

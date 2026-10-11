@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import ModalDialog from '@/components/ui/ModalDialog.vue';
+import TableSkeleton from '@/components/ui/TableSkeleton.vue';
 
 const auth = useAuthStore();
 const toast = useToastStore();
@@ -227,9 +228,9 @@ onMounted(async () => {
               <th class="text-right">Unit Price</th><th>Status</th><th class="text-right">Actions</th>
             </tr>
           </thead>
-          <tbody>
-            <tr v-if="loading"><td colspan="9" class="text-center py-12 text-slate-400">Loading inventory…</td></tr>
-            <tr v-else-if="!rows.length"><td colspan="9" class="text-center py-12 text-slate-400">No inventory records match these filters.</td></tr>
+          <TableSkeleton v-if="loading" :columns="9" :rows="5" />
+          <tbody v-else>
+            <tr v-if="!rows.length"><td colspan="9" class="text-center py-12 text-slate-400">No inventory records match these filters.</td></tr>
             <tr v-else v-for="r in rows" :key="r.inventory_id">
               <td>
                 <RouterLink :to="`/inventory/${r.product.product_id}`" class="font-medium text-slate-800 hover:text-navy-600 hover:underline">
