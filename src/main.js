@@ -1,4 +1,4 @@
-﻿import { createApp } from 'vue';
+import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
@@ -22,14 +22,27 @@ if (auth.token) {
 }
 
 /**
- * A 401 from any request means the session is no longer valid or has been revoked.
- * Clear session state and redirect user cleanly to sign in.
+ * A 401 from any request means the session is no longer valid or has expired.
+ * Authoritatively clear the authenticated session and redirect to the corresponding login interface.
  */
 setUnauthorizedHandler(() => {
-  auth.clearSession();
   const current = router.currentRoute.value;
+  const isSuperAdminContext = auth.isSuperAdmin || current.path.startsWith('/super-admin');
+
+  auth.clearSession();
+
   if (!current.meta.public) {
-    router.replace({ name: 'login', query: { redirect: current.fullPath } });
+    if (isSuperAdminContext) {
+      router.replace({
+        name: 'super-admin-login',
+        query: { redirect: current.fullPath, expired: 'true' },
+      });
+    } else {
+      router.replace({
+        name: 'login',
+        query: { redirect: current.fullPath, expired: 'true' },
+      });
+    }
   }
 });
 

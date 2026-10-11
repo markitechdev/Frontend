@@ -1,4 +1,4 @@
-﻿import { defineStore } from 'pinia';
+import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authApi, superAdminAuthApi } from '@/api';
 import { useDashboardStore } from './dashboard';
@@ -46,27 +46,66 @@ export const useAuthStore = defineStore('auth', () => {
     else localStorage.removeItem(USER_KEY);
   };
 
+  /** Normal tenant user sign in */
   const login = async (email, password) => {
     loading.value = true;
     error.value = null;
     try {
       const result = await authApi.login(email, password);
+      // Strictly prevent Super Admin accounts from utilizing normal login
+      if (result.user?.isSuperAdmin || result.user?.role?.role_code === 'super_admin') {
+        throw new Error('Invalid email or password.');
+      }
       persist(result.user, result.session.accessToken);
       verified.value = true;
       return result.user;
     } catch (e) {
-      error.value = e.message;
+      error.value = e.message || 'Invalid email or password.';
       throw e;
     } finally {
       loading.value = false;
     }
   };
 
+  /** Normal tenant user sign out */
   const logout = async () => {
-    try { if (token.value) await authApi.logout(); } catch { /* ignore */ }
-    persist(null, null);
-    verified.value = false;
-    useDashboardStore().invalidate();
+    try {
+      if (token.value) await authApi.logout();
+    } catch {
+      /* ignore */
+    }
+    clearSession();
+  };
+
+  /** Dedicated Super Admin sign in */
+  const superAdminLogin = async (email, password) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const result = await superAdminAuthApi.login(email, password);
+      // Authoritatively verify Super Admin identity
+      if (!result.user?.isSuperAdmin && result.user?.role?.role_code !== 'super_admin') {
+        throw new Error('Invalid credentials or unauthorized account.');
+      }
+      persist(result.user, result.session.accessToken);
+      verified.value = true;
+      return result.user;
+    } catch (e) {
+      error.value = e.message || 'Invalid credentials or unauthorized account.';
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /** Dedicated Super Admin sign out */
+  const superAdminLogout = async () => {
+    try {
+      if (token.value) await superAdminAuthApi.logout();
+    } catch {
+      /* ignore */
+    }
+    clearSession();
   };
 
   /** Re-reads profile from server to guarantee true verified claims and prevent client-side tampering. */
@@ -76,13 +115,14 @@ export const useAuthStore = defineStore('auth', () => {
       return null;
     }
     try {
-      const me = await authApi.me();
+      const me = isSuperAdmin.value
+        ? await superAdminAuthApi.me()
+        : await authApi.me();
       persist({ ...me, id: me.id }, token.value);
       verified.value = true;
       return me;
     } catch {
-      persist(null, null);
-      verified.value = false;
+      clearSession();
       return null;
     }
   };
@@ -91,38 +131,11 @@ export const useAuthStore = defineStore('auth', () => {
   const clearSession = () => {
     persist(null, null);
     verified.value = false;
-    useDashboardStore().invalidate();
-  };
-
-
-  const superAdminLogin = async (email, password) => {
-    loading.value = true;
-    error.value = null;
     try {
-      const result = await superAdminAuthApi.login(email, password);
-      if (!result.user?.isSuperAdmin && result.user?.role?.role_code !== 'super_admin') {
-        throw new Error('Access denied: Account is not an authorized Super Admin.');
-      }
-      persist(result.user, result.session.accessToken);
-      verified.value = true;
-      return result.user;
-    } catch (e) {
-      error.value = e.message || 'Unable to authenticate with this login.';
-      throw e;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const superAdminLogout = async () => {
-    try {
-      if (token.value) await superAdminAuthApi.logout();
+      useDashboardStore().invalidate();
     } catch {
       /* ignore */
     }
-    persist(null, null);
-    verified.value = false;
-    useDashboardStore().invalidate();
   };
 
   return {
