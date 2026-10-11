@@ -1,8 +1,8 @@
 ﻿<script setup>
-import { computed } from 'vue';
+import { computed, onMounted, onBeforeUnmount } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
-defineProps({ mobileOpen: { type: Boolean, default: false } });
+const props = defineProps({ mobileOpen: { type: Boolean, default: false } });
 const emit = defineEmits(['close']);
 
 const auth = useAuthStore();
@@ -55,6 +55,24 @@ const sections = computed(() =>
     }))
     .filter((s) => s.items.length)
 );
+
+const onKeyDown = (e) => {
+  if (e.key === 'Escape' && props.mobileOpen) emit('close');
+};
+
+const onResize = () => {
+  if (window.innerWidth >= 1024 && props.mobileOpen) emit('close');
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('resize', onResize);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeyDown);
+  window.removeEventListener('resize', onResize);
+});
 </script>
 
 <template>
@@ -105,7 +123,7 @@ const sections = computed(() =>
       <!-- Close button on mobile -->
       <button
         type="button"
-        class="lg:hidden text-slate-400 hover:text-slate-700 p-1 rounded-lg"
+        class="lg:hidden text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100"
         @click="emit('close')"
         aria-label="Close navigation drawer"
       >
