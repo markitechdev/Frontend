@@ -118,14 +118,14 @@ const submit = async () => {
 
         <div class="grid grid-cols-2 gap-4 pt-6 border-t border-slate-800">
           <div class="flex items-start gap-3">
-            <span class="text-purple-400 text-lg">🛡</span>
+            <span class="text-purple-400 text-lg" aria-hidden="true">🛡</span>
             <div>
               <p class="text-sm font-semibold text-white">Full Tenant Isolation</p>
               <p class="text-xs text-slate-400">Strict cross-tenant boundaries & workspace policy enforcement</p>
             </div>
           </div>
           <div class="flex items-start gap-3">
-            <span class="text-purple-400 text-lg">⚡</span>
+            <span class="text-purple-400 text-lg" aria-hidden="true">⚡</span>
             <div>
               <p class="text-sm font-semibold text-white">Cryptographic Claims</p>
               <p class="text-xs text-slate-400">Database-verified RBAC with zero client-side role trust</p>
@@ -141,12 +141,12 @@ const submit = async () => {
     </div>
 
     <!-- Super Admin Login Form Panel -->
-    <div class="flex items-center justify-center p-6 sm:p-12 lg:p-16 bg-white">
+    <main class="flex items-center justify-center p-6 sm:p-12 lg:p-16 bg-white" aria-labelledby="sa-heading">
       <div class="w-full max-w-md">
         <!-- Header badge -->
         <div class="flex items-center justify-between mb-6">
           <div class="flex items-center gap-2.5">
-            <div class="h-9 w-9 rounded-xl bg-slate-900 text-white grid place-items-center text-xs font-black shadow-sm">
+            <div class="h-9 w-9 rounded-xl bg-slate-900 text-white grid place-items-center text-xs font-black shadow-sm" aria-hidden="true">
               IMS
             </div>
             <span class="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-full">
@@ -154,13 +154,13 @@ const submit = async () => {
             </span>
           </div>
 
-          <RouterLink to="/login" class="text-xs font-medium text-slate-500 hover:text-navy-700 transition-colors">
+          <RouterLink to="/login" class="text-xs font-medium text-slate-500 hover:text-navy-700 transition-colors focus:outline-hidden focus:ring-2 focus:ring-indigo-500 rounded p-1">
             ← Normal Login
           </RouterLink>
         </div>
 
         <div class="mb-8">
-          <h2 class="text-2xl font-bold tracking-tight text-slate-900">Platform Administrator Sign In</h2>
+          <h2 id="sa-heading" class="text-2xl font-bold tracking-tight text-slate-900">Platform Administrator Sign In</h2>
           <p class="text-sm text-slate-500 mt-1.5">
             Authenticate with your verified Super Admin credentials to enter the platform administration dashboard.
           </p>
@@ -171,8 +171,9 @@ const submit = async () => {
           v-if="route.query.expired === 'true' && !auth.error"
           class="mb-5 flex items-start gap-2.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3"
           role="status"
+          aria-live="polite"
         >
-          <span class="text-amber-500 font-bold shrink-0">⚠</span>
+          <span class="text-amber-500 font-bold shrink-0" aria-hidden="true">⚠</span>
           <p class="leading-snug">Your Super Admin session has expired. Please sign in again to continue.</p>
         </div>
 
@@ -180,7 +181,7 @@ const submit = async () => {
           <!-- Email Field -->
           <div>
             <label class="label" for="sa-email">
-              Admin Email <span class="text-red-500">*</span>
+              Admin Email <span class="text-red-500" aria-hidden="true">*</span>
             </label>
             <div class="relative">
               <input
@@ -193,10 +194,12 @@ const submit = async () => {
                 :class="{ 'border-red-400 focus:ring-red-300 focus:border-red-500': errors.email }"
                 placeholder="superadmin@ims.local"
                 :disabled="submitting || auth.loading"
+                :aria-invalid="Boolean(errors.email)"
+                :aria-describedby="errors.email ? 'sa-email-error' : undefined"
               />
             </div>
-            <p v-if="errors.email" class="text-xs text-red-600 mt-1 font-medium flex items-center gap-1">
-              <span>⚠</span> {{ errors.email }}
+            <p v-if="errors.email" id="sa-email-error" class="text-xs text-red-600 mt-1 font-medium flex items-center gap-1" role="alert">
+              <span aria-hidden="true">⚠</span> {{ errors.email }}
             </p>
           </div>
 
@@ -204,7 +207,7 @@ const submit = async () => {
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <label class="label mb-0" for="sa-password">
-                Admin Password <span class="text-red-500">*</span>
+                Admin Password <span class="text-red-500" aria-hidden="true">*</span>
               </label>
             </div>
             <div class="relative">
@@ -218,17 +221,20 @@ const submit = async () => {
                 :class="{ 'border-red-400 focus:ring-red-300 focus:border-red-500': errors.password }"
                 placeholder="••••••••••••"
                 :disabled="submitting || auth.loading"
+                :aria-invalid="Boolean(errors.password)"
+                :aria-describedby="errors.password ? 'sa-password-error' : undefined"
               />
               <button
                 type="button"
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500 hover:text-navy-700 px-1.5 py-0.5 rounded transition-colors"
+                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-500 hover:text-navy-700 px-2 py-1 rounded transition-colors focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
                 @click="showPassword = !showPassword"
+                :aria-label="showPassword ? 'Hide admin password' : 'Show admin password'"
               >
                 {{ showPassword ? 'Hide' : 'Show' }}
               </button>
             </div>
-            <p v-if="errors.password" class="text-xs text-red-600 mt-1 font-medium flex items-center gap-1">
-              <span>⚠</span> {{ errors.password }}
+            <p v-if="errors.password" id="sa-password-error" class="text-xs text-red-600 mt-1 font-medium flex items-center gap-1" role="alert">
+              <span aria-hidden="true">⚠</span> {{ errors.password }}
             </p>
           </div>
 
@@ -237,22 +243,25 @@ const submit = async () => {
             v-if="auth.error"
             class="flex items-start gap-2.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3.5"
             role="alert"
+            aria-live="assertive"
           >
-            <span class="text-red-500 font-bold shrink-0">✕</span>
+            <span class="text-red-500 font-bold shrink-0" aria-hidden="true">✕</span>
             <p class="leading-snug">{{ auth.error }}</p>
           </div>
 
           <!-- Submit Button -->
           <button
             type="submit"
-            class="btn-primary w-full py-2.5 text-sm font-semibold bg-slate-900 hover:bg-slate-800 shadow-sm transition-all"
+            class="btn-primary w-full py-2.5 text-sm font-semibold bg-slate-900 hover:bg-slate-800 shadow-sm transition-all focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-slate-900"
             :disabled="submitting || auth.loading"
+            :aria-busy="submitting || auth.loading"
           >
             <svg
               v-if="submitting || auth.loading"
-              class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+              class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block"
               fill="none"
               viewBox="0 0 24 24"
+              aria-hidden="true"
             >
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
@@ -271,7 +280,7 @@ const submit = async () => {
           </div>
           <button
             type="button"
-            class="w-full text-left rounded-lg border border-purple-200 bg-purple-50/50 p-2.5 hover:border-purple-400 hover:bg-purple-50 transition-colors"
+            class="w-full text-left rounded-lg border border-purple-200 bg-purple-50/50 p-2.5 hover:border-purple-400 hover:bg-purple-50 transition-colors focus:outline-hidden focus:ring-2 focus:ring-purple-500"
             @click="useSuperAdminDemo"
           >
             <p class="text-xs font-semibold text-purple-900">{{ SUPER_ADMIN_DEMO.role }}</p>
@@ -283,6 +292,6 @@ const submit = async () => {
           Restricted platform area. Unauthorized access attempts are monitored and recorded.
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
