@@ -37,6 +37,22 @@ const byCategory = computed(() => {
 
 const maxCategoryValue = computed(() => Math.max(1, ...byCategory.value.map((c) => c.value)));
 
+const totalCategoryValuation = computed(() =>
+  byCategory.value.reduce((acc, c) => acc + c.value, 0)
+);
+
+const categorySharePct = (val) => {
+  if (!totalCategoryValuation.value || !val) return '0.0';
+  return ((val / totalCategoryValuation.value) * 100).toFixed(1);
+};
+
+const categoryBarWidth = (val) => {
+  if (!maxCategoryValue.value || !val) return '0%';
+  const rawPct = (val / maxCategoryValue.value) * 100;
+  return `${Math.max(2, rawPct)}%`;
+};
+
+
 const lowStockRows = computed(() =>
   inventoryRows.value
     .filter((r) => ['low_stock', 'out_of_stock', 'reorder'].includes(r.stock_status))
@@ -179,17 +195,41 @@ onMounted(load);
     <template v-else>
       <!-- category valuation chart -->
       <div class="card">
-        <div class="card-header"><h3 class="card-title">Stock Value by Category</h3></div>
-        <div class="card-body space-y-3">
-          <div v-if="!byCategory.length" class="text-sm text-slate-400 text-center py-6">No inventory to chart.</div>
-          <div v-for="c in byCategory" :key="c.name">
-            <div class="flex items-center justify-between text-sm mb-1">
-              <span class="text-slate-700 font-medium">{{ c.name }}</span>
-              <span class="text-slate-500 tabular-nums">{{ peso(c.value) }} · {{ c.quantity }} units</span>
+        <div class="card-header flex flex-wrap items-center justify-between gap-2">
+          <h3 class="card-title">Stock Value by Category</h3>
+          <span class="text-xs text-slate-500">
+            Total Valuation: <strong class="text-slate-800 font-mono">{{ peso(totalCategoryValuation) }}</strong>
+          </span>
+        </div>
+        <div class="card-body space-y-3.5">
+          <div v-if="!byCategory.length" class="text-sm text-slate-400 text-center py-8">
+            <p class="font-medium">No category inventory to chart.</p>
+            <p class="text-xs text-slate-400 mt-1">Add items or update filters to see category valuation distribution.</p>
+          </div>
+          <div
+            v-for="c in byCategory"
+            :key="c.name"
+            class="group relative space-y-1.5"
+            :title="`${c.name}: ${peso(c.value)} (${categorySharePct(c.value)}% of total value, ${num(c.quantity)} units in ${c.items} items)`"
+          >
+            <div class="flex flex-wrap items-center justify-between text-sm gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="text-slate-800 font-medium truncate">{{ c.name }}</span>
+                <span class="text-[11px] font-mono font-medium text-navy-800 bg-navy-50 border border-navy-100 rounded px-1.5 py-0.5">
+                  {{ categorySharePct(c.value) }}%
+                </span>
+              </div>
+              <div class="text-xs sm:text-sm text-slate-500 tabular-nums">
+                <span class="font-semibold text-slate-800 font-mono">{{ peso(c.value) }}</span>
+                <span class="text-slate-300 mx-1.5">•</span>
+                <span>{{ num(c.quantity) }} units</span>
+              </div>
             </div>
-            <div class="h-2 rounded-full bg-slate-100 overflow-hidden">
-              <div class="h-full rounded-full bg-navy-700"
-                   :style="{ width: `${(c.value / maxCategoryValue) * 100}%` }" />
+            <div class="h-2.5 rounded-full bg-slate-100 overflow-hidden relative">
+              <div
+                class="h-full rounded-full bg-navy-700 group-hover:bg-navy-600 transition-all duration-500 ease-out"
+                :style="{ width: categoryBarWidth(c.value) }"
+              />
             </div>
           </div>
         </div>

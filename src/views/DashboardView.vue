@@ -23,6 +23,18 @@ const when = (d) => new Date(d).toLocaleString('en-PH', { month: 'short', day: '
 const cards   = computed(() => data.value?.cards ?? {});
 const panels  = computed(() => data.value?.panels ?? {});
 
+
+const priorityPct = (count) => {
+  if (!priorityTotal.value || !count) return 0;
+  return Math.round((count / priorityTotal.value) * 100);
+};
+
+const priorityBarWidth = (count) => {
+  if (!priorityTotal.value || !count) return '0%';
+  const rawPct = (count / priorityTotal.value) * 100;
+  return `${Math.max(3, rawPct)}%`;
+};
+
 const priorityTotal = computed(() => {
   const p = panels.value.alertsByPriority || {};
   return (p.critical || 0) + (p.high || 0) + (p.medium || 0) + (p.low || 0);
@@ -170,17 +182,31 @@ onMounted(() => load(false));
             <h3 class="card-title">Alerts by Priority</h3>
             <RouterLink to="/alerts" class="text-xs font-medium text-navy-600 hover:underline">View all</RouterLink>
           </div>
-          <div class="card-body space-y-3">
-            <div v-for="(count, level) in panels.alertsByPriority" :key="level">
-              <div class="flex items-center justify-between text-sm mb-1">
+          <div class="card-body space-y-3.5">
+            <div
+              v-for="(count, level) in panels.alertsByPriority"
+              :key="level"
+              class="group relative"
+              :title="`${level.toUpperCase()}: ${count} alert(s) (${priorityPct(count)}% of total)`"
+            >
+              <div class="flex items-center justify-between text-sm mb-1.5">
                 <StatusBadge :status="level" />
-                <span class="font-semibold tabular-nums text-slate-700">{{ count }}</span>
+                <div class="flex items-center gap-1.5 tabular-nums">
+                  <span class="text-xs text-slate-400">({{ priorityPct(count) }}%)</span>
+                  <span class="font-semibold text-slate-700">{{ count }}</span>
+                </div>
               </div>
-              <div class="h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                <div class="h-full rounded-full"
-                     :class="{ 'bg-red-500': level === 'critical', 'bg-amber-500': level === 'high',
-                               'bg-blue-500': level === 'medium', 'bg-slate-400': level === 'low' }"
-                     :style="{ width: priorityTotal ? `${(count / priorityTotal) * 100}%` : '0%' }" />
+              <div class="h-2 rounded-full bg-slate-100 overflow-hidden relative">
+                <div
+                  class="h-full rounded-full transition-all duration-500 ease-out"
+                  :class="{
+                    'bg-red-500': level === 'critical',
+                    'bg-amber-500': level === 'high',
+                    'bg-blue-500': level === 'medium',
+                    'bg-slate-400': level === 'low'
+                  }"
+                  :style="{ width: priorityBarWidth(count) }"
+                />
               </div>
             </div>
             <p v-if="!priorityTotal" class="text-sm text-slate-400 text-center py-2">No active alerts.</p>
