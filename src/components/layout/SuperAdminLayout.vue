@@ -7,7 +7,7 @@ const sidebarOpen = ref(false);
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased">
+  <div class="dark flex min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased">
     <!-- Super Admin Isolated Sidebar Navigation -->
     <SuperAdminSidebar :mobile-open="sidebarOpen" @close="sidebarOpen = false" />
 

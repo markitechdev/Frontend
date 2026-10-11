@@ -53,12 +53,7 @@ const goBack = () => {
         </RouterLink>
       </div>
 
-      <div class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-400">
-        Looking for platform root administration?
-        <RouterLink to="/super-admin/login" class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline ml-1">
-          Super Admin Login
-        </RouterLink>
-      </div>
+      
     </div>
   </div>
 </template>

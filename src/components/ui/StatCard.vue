@@ -47,10 +47,10 @@ const displayValue = computed(() => {
       </slot>
     </div>
     <div class="min-w-0 flex-1">
-      <p class="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">{{ displayLabel }}</p>
+      <p class="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 truncate">{{ displayLabel }}</p>
       <div v-if="loading" class="h-7 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse my-0.5" />
       <p v-else class="text-2xl font-bold text-slate-900 dark:text-white leading-tight tabular-nums">{{ displayValue }}</p>
-      <p v-if="displaySublabel" class="text-xs text-slate-400 mt-0.5 truncate">{{ displaySublabel }}</p>
+      <p v-if="displaySublabel" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{{ displaySublabel }}</p>
     </div>
   </div>
 </template>
