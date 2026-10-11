@@ -56,13 +56,13 @@ onBeforeUnmount(() => {
 
 <template>
   <header
-    class="sticky top-0 z-30 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 sm:px-6 shadow-xs"
+    class="sticky top-0 z-30 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 shadow-xs"
   >
     <!-- Left: Mobile menu button & breadcrumbs -->
-    <div class="flex items-center gap-3 min-w-0">
+    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
       <button
         type="button"
-        class="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+        class="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
         @click="emit('toggle-sidebar')"
         aria-label="Toggle navigation drawer"
       >
@@ -77,14 +77,14 @@ onBeforeUnmount(() => {
           Platform Admin
         </span>
         <span class="hidden sm:inline text-slate-300 dark:text-slate-600">/</span>
-        <h1 class="text-base sm:text-lg font-semibold text-slate-900 dark:text-white truncate">
+        <h1 class="text-sm sm:text-base lg:text-lg font-semibold text-slate-900 dark:text-white truncate">
           {{ title }}
         </h1>
       </div>
     </div>
 
     <!-- Right: Telemetry pill & user profile dropdown -->
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2 sm:gap-3">
       <!-- Session clearance badge -->
       <div class="hidden md:flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -95,7 +95,7 @@ onBeforeUnmount(() => {
       <div class="relative" ref="menuRef">
         <button
           type="button"
-          class="flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+          class="flex items-center gap-2 sm:gap-2.5 p-1.5 min-h-[44px] rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
           @click="menuOpen = !menuOpen"
           :aria-expanded="menuOpen"
           aria-haspopup="true"
