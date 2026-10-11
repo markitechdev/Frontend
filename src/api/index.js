@@ -6,12 +6,35 @@ const qs = (params = {}) => {
   return { params: clean };
 };
 
-
 export const superAdminAuthApi = {
   login:   (email, password) => api.post('/super-admin/auth/login', { email, password }).then(unwrap),
   me:      () => api.get('/super-admin/auth/me').then(unwrap),
   logout:  () => api.post('/super-admin/auth/logout').then(unwrap),
   refresh: (refreshToken) => api.post('/super-admin/auth/refresh', { refreshToken }).then(unwrap),
+};
+
+export const superAdminApi = {
+  getDashboard: () => api.get('/super-admin/dashboard').then(unwrap),
+  getStats:     () => api.get('/super-admin/stats').then(unwrap),
+  getTenants:   () => api.get('/super-admin/tenants').then(unwrap),
+  users: {
+    list:   (params) => api.get('/super-admin/users', qs(params)).then(unwrap),
+    get:    (id) => api.get(`/super-admin/users/${id}`).then(unwrap),
+    create: (body) => api.post('/super-admin/users', body).then(unwrap),
+    update: (id, body) => api.patch(`/super-admin/users/${id}`, body).then(unwrap),
+    remove: (id) => api.delete(`/super-admin/users/${id}`),
+    resetPassword: (id, password) => api.post(`/super-admin/users/${id}/password`, { password }).then(unwrap),
+  },
+  roles: {
+    list:        () => api.get('/super-admin/roles').then(unwrap),
+    permissions: () => api.get('/super-admin/roles/permissions').then(unwrap),
+    create:      (body) => api.post('/super-admin/roles', body).then(unwrap),
+    setPermissions: (id, permissionIds) => api.put(`/super-admin/roles/${id}/permissions`, { permissionIds }).then(unwrap),
+    remove:      (id) => api.delete(`/super-admin/roles/${id}`).then(unwrap),
+  },
+  logs: {
+    list: (params) => api.get('/super-admin/logs', qs(params)).then(unwrapWithMeta),
+  },
 };
 
 export const authApi = {
