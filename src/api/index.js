@@ -6,6 +6,14 @@ const qs = (params = {}) => {
   return { params: clean };
 };
 
+
+export const superAdminAuthApi = {
+  login:   (email, password) => api.post('/super-admin/auth/login', { email, password }).then(unwrap),
+  me:      () => api.get('/super-admin/auth/me').then(unwrap),
+  logout:  () => api.post('/super-admin/auth/logout').then(unwrap),
+  refresh: (refreshToken) => api.post('/super-admin/auth/refresh', { refreshToken }).then(unwrap),
+};
+
 export const authApi = {
   login:   (email, password) => api.post('/auth/login', { email, password }).then(unwrap),
   me:      () => api.get('/auth/me').then(unwrap),

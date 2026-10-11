@@ -1,6 +1,6 @@
 ﻿import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { authApi } from '@/api';
+import { authApi, superAdminAuthApi } from '@/api';
 import { useDashboardStore } from './dashboard';
 
 const TOKEN_KEY = 'ims_access_token';
@@ -94,10 +94,41 @@ export const useAuthStore = defineStore('auth', () => {
     useDashboardStore().invalidate();
   };
 
+
+  const superAdminLogin = async (email, password) => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const result = await superAdminAuthApi.login(email, password);
+      if (!result.user?.isSuperAdmin && result.user?.role?.role_code !== 'super_admin') {
+        throw new Error('Access denied: Account is not an authorized Super Admin.');
+      }
+      persist(result.user, result.session.accessToken);
+      verified.value = true;
+      return result.user;
+    } catch (e) {
+      error.value = e.message || 'Unable to authenticate with this login.';
+      throw e;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const superAdminLogout = async () => {
+    try {
+      if (token.value) await superAdminAuthApi.logout();
+    } catch {
+      /* ignore */
+    }
+    persist(null, null);
+    verified.value = false;
+    useDashboardStore().invalidate();
+  };
+
   return {
     user, token, loading, error, verified,
     isAuthenticated, isSuperAdmin, roleCode, roleName, permissions,
     tenantId, tenantName,
-    can, canAny, login, logout, refreshProfile, clearSession,
+    can, canAny, login, superAdminLogin, logout, superAdminLogout, refreshProfile, clearSession,
   };
 });
