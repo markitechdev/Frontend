@@ -1,51 +1,116 @@
-import { createRouter, createWebHistory } from 'vue-router';
+﻿import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
 /**
  * meta.permission  - a single permission code required to enter the route
- * meta.anyOf       - array; at least one is required
+ * meta.anyOf       - array of permission codes; at least one is required
  * meta.public      - route is reachable while signed out
+ * meta.title       - page document title
  */
 const routes = [
-  { path: '/login', name: 'login', component: () => import('@/views/auth/LoginView.vue'), meta: { public: true, layout: 'blank' } },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/auth/LoginView.vue'),
+    meta: { public: true, layout: 'blank', title: 'Sign In' },
+  },
 
-  { path: '/', redirect: '/dashboard' },
-  { path: '/dashboard', name: 'dashboard', component: () => import('@/views/DashboardView.vue'),
-    meta: { title: 'Dashboard' } },
+  {
+    path: '/',
+    redirect: '/dashboard',
+  },
+  {
+    path: '/dashboard',
+    name: 'dashboard',
+    component: () => import('@/views/DashboardView.vue'),
+    meta: { title: 'Dashboard' },
+  },
 
-  { path: '/inventory', name: 'inventory', component: () => import('@/views/inventory/InventoryView.vue'),
-    meta: { title: 'Inventory Management', permission: 'inventory.view' } },
-  { path: '/inventory/:id', name: 'product-detail', component: () => import('@/views/inventory/ProductDetailView.vue'),
-    meta: { title: 'Product Details', permission: 'products.view' } },
+  {
+    path: '/inventory',
+    name: 'inventory',
+    component: () => import('@/views/inventory/InventoryView.vue'),
+    meta: { title: 'Inventory Management', permission: 'inventory.view' },
+  },
+  {
+    path: '/inventory/:id',
+    name: 'product-detail',
+    component: () => import('@/views/inventory/ProductDetailView.vue'),
+    meta: { title: 'Product Details', permission: 'products.view' },
+  },
 
-  { path: '/movements', name: 'movements', component: () => import('@/views/inventory/MovementsView.vue'),
-    meta: { title: 'Stock Movements', permission: 'movements.view' } },
+  {
+    path: '/movements',
+    name: 'movements',
+    component: () => import('@/views/inventory/MovementsView.vue'),
+    meta: { title: 'Stock Movements', permission: 'movements.view' },
+  },
 
-  { path: '/alerts', name: 'alerts', component: () => import('@/views/inventory/AlertsView.vue'),
-    meta: { title: 'Alerts & Reorder', permission: 'alerts.view' } },
+  {
+    path: '/alerts',
+    name: 'alerts',
+    component: () => import('@/views/inventory/AlertsView.vue'),
+    meta: { title: 'Alerts & Reorder Due', permission: 'alerts.view' },
+  },
 
-  { path: '/suppliers', name: 'suppliers', component: () => import('@/views/inventory/SuppliersView.vue'),
-    meta: { title: 'Suppliers', permission: 'suppliers.view' } },
+  {
+    path: '/suppliers',
+    name: 'suppliers',
+    component: () => import('@/views/inventory/SuppliersView.vue'),
+    meta: { title: 'Suppliers', permission: 'suppliers.view' },
+  },
 
-  { path: '/reports', name: 'reports', component: () => import('@/views/ReportsView.vue'),
-    meta: { title: 'Reports & Insights', permission: 'reports.view' } },
+  {
+    path: '/reports',
+    name: 'reports',
+    component: () => import('@/views/ReportsView.vue'),
+    meta: { title: 'Reports & Analytics', permission: 'reports.view' },
+  },
 
-  { path: '/users', name: 'users', component: () => import('@/views/admin/UsersView.vue'),
-    meta: { title: 'User Management', permission: 'users.view' } },
-  { path: '/roles', name: 'roles', component: () => import('@/views/admin/RolesView.vue'),
-    meta: { title: 'Roles & Permissions', permission: 'roles.manage' } },
-  { path: '/activity', name: 'activity', component: () => import('@/views/admin/ActivityLogView.vue'),
-    meta: { title: 'System Activity', permission: 'logs.view' } },
+  {
+    path: '/users',
+    name: 'users',
+    component: () => import('@/views/admin/UsersView.vue'),
+    meta: { title: 'User Management', permission: 'users.view' },
+  },
+  {
+    path: '/roles',
+    name: 'roles',
+    component: () => import('@/views/admin/RolesView.vue'),
+    meta: { title: 'Roles & Permissions', permission: 'roles.manage' },
+  },
+  {
+    path: '/activity',
+    name: 'activity',
+    component: () => import('@/views/admin/ActivityLogView.vue'),
+    meta: { title: 'System Activity Logs', permission: 'logs.view' },
+  },
 
-  { path: '/finance', name: 'finance', component: () => import('@/views/FinanceView.vue'),
-    meta: { title: 'Financial Records', permission: 'finance.view' } },
-  { path: '/staff', name: 'staff', component: () => import('@/views/StaffView.vue'),
-    meta: { title: 'Staff Management', permission: 'staff.view' } },
+  {
+    path: '/finance',
+    name: 'finance',
+    component: () => import('@/views/FinanceView.vue'),
+    meta: { title: 'Financial Records', permission: 'finance.view' },
+  },
+  {
+    path: '/staff',
+    name: 'staff',
+    component: () => import('@/views/StaffView.vue'),
+    meta: { title: 'Staff Directory', permission: 'staff.view' },
+  },
 
-  { path: '/forbidden', name: 'forbidden', component: () => import('@/views/ForbiddenView.vue'),
-    meta: { title: 'Access Denied' } },
-  { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue'),
-    meta: { title: 'Page Not Found' } },
+  {
+    path: '/forbidden',
+    name: 'forbidden',
+    component: () => import('@/views/ForbiddenView.vue'),
+    meta: { title: 'Access Denied' },
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/views/NotFoundView.vue'),
+    meta: { title: 'Page Not Found' },
+  },
 ];
 
 const router = createRouter({
@@ -58,17 +123,28 @@ router.beforeEach((to) => {
   const auth = useAuthStore();
 
   if (to.meta.public) {
-    // already signed in? skip the login page
-    if (to.name === 'login' && auth.isAuthenticated) return { name: 'dashboard' };
+    if (to.name === 'login' && auth.isAuthenticated) {
+      return { name: 'dashboard', replace: true };
+    }
     return true;
   }
 
   if (!auth.isAuthenticated) {
-    return { name: 'login', query: { redirect: to.fullPath } };
+    return { name: 'login', query: { redirect: to.fullPath }, replace: true };
   }
 
-  if (to.meta.permission && !auth.can(to.meta.permission)) return { name: 'forbidden' };
-  if (to.meta.anyOf && !auth.canAny(...to.meta.anyOf))     return { name: 'forbidden' };
+  // Super Admin possesses global administrative clearance across all routes
+  if (auth.isSuperAdmin) {
+    return true;
+  }
+
+  // Enforce granular route permissions via replace: true to prevent history trapping
+  if (to.meta.permission && !auth.can(to.meta.permission)) {
+    return { name: 'forbidden', replace: true };
+  }
+  if (to.meta.anyOf && !auth.canAny(...to.meta.anyOf)) {
+    return { name: 'forbidden', replace: true };
+  }
 
   return true;
 });
