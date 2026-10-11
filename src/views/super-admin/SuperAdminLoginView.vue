@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -66,6 +66,7 @@ const submit = async () => {
   if (!validate()) return;
 
   submitting.value = true;
+  auth.error = null;
   try {
     if (typeof auth.superAdminLogin === 'function') {
       await auth.superAdminLogin(email.value.trim(), password.value);
@@ -75,7 +76,7 @@ const submit = async () => {
     const target = typeof route.query.redirect === 'string' ? route.query.redirect : '/super-admin/dashboard';
     router.replace(target);
   } catch (err) {
-    // Error is set in auth store
+    // Error is set in auth store with safe generic message
   } finally {
     submitting.value = false;
   }
@@ -163,6 +164,16 @@ const submit = async () => {
           <p class="text-sm text-slate-500 mt-1.5">
             Authenticate with your verified Super Admin credentials to enter the platform administration dashboard.
           </p>
+        </div>
+
+        <!-- Session Expired Notice -->
+        <div
+          v-if="route.query.expired === 'true' && !auth.error"
+          class="mb-5 flex items-start gap-2.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3"
+          role="status"
+        >
+          <span class="text-amber-500 font-bold shrink-0">⚠</span>
+          <p class="leading-snug">Your Super Admin session has expired. Please sign in again to continue.</p>
         </div>
 
         <form class="space-y-5" @submit.prevent="submit" novalidate>
