@@ -11,10 +11,11 @@ import StatusBadge from '@/components/ui/StatusBadge.vue';
 
 const auth = useAuthStore();
 const toast = useToastStore();
+const dashboardStore = useDashboardStore();
 
-const data = ref(null);
-const loading = ref(true);
-const error = ref(null);
+const data = computed(() => dashboardStore.data);
+const loading = computed(() => dashboardStore.loading && !dashboardStore.data);
+const error = computed(() => dashboardStore.error);
 
 const peso = (n) => `₱${Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const num  = (n) => Number(n || 0).toLocaleString();
