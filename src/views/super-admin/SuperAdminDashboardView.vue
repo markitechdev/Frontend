@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useSuperAdminDashboardStore } from '@/stores/superAdminDashboard';
 import StatCard from '@/components/ui/StatCard.vue';
 import StatCardSkeleton from '@/components/ui/StatCardSkeleton.vue';
+import TableSkeleton from '@/components/ui/TableSkeleton.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import Skeleton from '@/components/ui/Skeleton.vue';
 
@@ -160,254 +161,274 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Skeletons Loading View -->
-    <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatCardSkeleton v-for="i in 8" :key="i" />
+    <!-- Skeletons Loading View for Metrics -->
+    <div v-if="loading" class="space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCardSkeleton v-for="i in 8" :key="i" />
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
+          <Skeleton class="h-5 w-36" />
+          <div class="space-y-3 pt-2">
+            <Skeleton v-for="i in 4" :key="i" class="h-7 w-full" />
+          </div>
+        </div>
+        <div class="lg:col-span-2 p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <Skeleton class="h-5 w-48 mb-4" />
+          <TableSkeleton :rows="5" :cols="5" />
+        </div>
+      </div>
+      <div class="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        <Skeleton class="h-5 w-56 mb-4" />
+        <TableSkeleton :rows="4" :cols="5" />
+      </div>
     </div>
 
-    <!-- Real Operational Metric Cards -->
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <StatCard
-        title="Total Catalog Products"
-        :value="cards?.totalProducts ?? 0"
-        subtitle="Active platform SKUs"
-        icon="▦"
-      />
-      <StatCard
-        title="Stock Valuation"
-        :value="peso(cards?.totalValue)"
-        subtitle="Aggregate inventory capital"
-        icon="₱"
-      />
-      <StatCard
-        title="Total Stock Units"
-        :value="num(cards?.totalQuantity)"
-        subtitle="Physical on-hand inventory"
-        icon="📦"
-      />
-      <StatCard
-        title="Low Stock Alert"
-        :value="cards?.lowStock ?? 0"
-        subtitle="Products below reorder threshold"
-        icon="⚠"
-        accent="warning"
-      />
-      <StatCard
-        title="Out of Stock"
-        :value="cards?.outOfStock ?? 0"
-        subtitle="Depleted catalog items"
-        icon="⛔"
-        accent="danger"
-      />
-      <StatCard
-        title="Reorder Due"
-        :value="cards?.reorderDue ?? 0"
-        subtitle="Suppliers pending PO action"
-        icon="🔄"
-        accent="info"
-      />
-      <StatCard
-        title="Active Suppliers"
-        :value="cards?.activeSuppliers ?? 0"
-        subtitle="Verified vendor network"
-        icon="⛟"
-      />
-      <StatCard
-        title="Platform Users"
-        :value="cards?.totalUsers ?? stats?.totalUsers ?? 0"
-        subtitle="Authorized operational seats"
-        icon="👥"
-      />
-    </div>
+    <!-- Loaded Real Operational Metric Cards & Panels -->
+    <template v-else>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Total Catalog Products"
+          :value="cards?.totalProducts ?? 0"
+          subtitle="Active platform SKUs"
+          icon="▦"
+        />
+        <StatCard
+          title="Stock Valuation"
+          :value="peso(cards?.totalValue)"
+          subtitle="Aggregate inventory capital"
+          icon="₱"
+        />
+        <StatCard
+          title="Total Stock Units"
+          :value="num(cards?.totalQuantity)"
+          subtitle="Physical on-hand inventory"
+          icon="📦"
+        />
+        <StatCard
+          title="Low Stock Alert"
+          :value="cards?.lowStock ?? 0"
+          subtitle="Products below reorder threshold"
+          icon="⚠"
+          accent="warning"
+        />
+        <StatCard
+          title="Out of Stock"
+          :value="cards?.outOfStock ?? 0"
+          subtitle="Depleted catalog items"
+          icon="⛔"
+          accent="danger"
+        />
+        <StatCard
+          title="Reorder Due"
+          :value="cards?.reorderDue ?? 0"
+          subtitle="Suppliers pending PO action"
+          icon="🔄"
+          accent="info"
+        />
+        <StatCard
+          title="Active Suppliers"
+          :value="cards?.activeSuppliers ?? 0"
+          subtitle="Verified vendor network"
+          icon="⛟"
+        />
+        <StatCard
+          title="Platform Users"
+          :value="cards?.totalUsers ?? stats?.totalUsers ?? 0"
+          subtitle="Authorized operational seats"
+          icon="👥"
+        />
+      </div>
 
-    <!-- Alert Distribution and Low Stock Attention Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Priority Distribution Graph -->
-      <div class="lg:col-span-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xs flex flex-col justify-between">
-        <div>
+      <!-- Alert Distribution and Low Stock Attention Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Priority Distribution Graph -->
+        <div class="lg:col-span-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                Alerts by Priority
+              </h2>
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                {{ priorityTotal }} Active
+              </span>
+            </div>
+
+            <div class="mt-4 space-y-3.5">
+              <!-- Critical -->
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span class="text-rose-600 dark:text-rose-400">Critical</span>
+                  <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.critical || 0 }} ({{ priorityPct(priorityCounts.critical) }}%)</span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div class="h-full bg-rose-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.critical) }" />
+                </div>
+              </div>
+
+              <!-- High -->
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span class="text-amber-600 dark:text-amber-400">High</span>
+                  <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.high || 0 }} ({{ priorityPct(priorityCounts.high) }}%)</span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div class="h-full bg-amber-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.high) }" />
+                </div>
+              </div>
+
+              <!-- Medium -->
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span class="text-blue-600 dark:text-blue-400">Medium</span>
+                  <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.medium || 0 }} ({{ priorityPct(priorityCounts.medium) }}%)</span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div class="h-full bg-blue-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.medium) }" />
+                </div>
+              </div>
+
+              <!-- Low -->
+              <div>
+                <div class="flex justify-between text-xs font-semibold mb-1">
+                  <span class="text-slate-500 dark:text-slate-400">Low</span>
+                  <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.low || 0 }} ({{ priorityPct(priorityCounts.low) }}%)</span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div class="h-full bg-slate-400 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.low) }" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <RouterLink
+              to="/super-admin/logs"
+              class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center justify-between"
+            >
+              <span>Review System Audit Trail</span>
+              <span>→</span>
+            </RouterLink>
+          </div>
+        </div>
+
+        <!-- Critical Stock Attention Table -->
+        <div class="lg:col-span-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
           <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-              Alerts by Priority
+              Attention Items & Stock Depletion
             </h2>
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-              {{ priorityTotal }} Active
+            <span class="text-xs text-slate-500 dark:text-slate-400">
+              {{ panels?.lowStockItems?.length || 0 }} flagged
             </span>
           </div>
 
-          <div class="mt-4 space-y-3.5">
-            <!-- Critical -->
-            <div>
-              <div class="flex justify-between text-xs font-semibold mb-1">
-                <span class="text-rose-600 dark:text-rose-400">Critical</span>
-                <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.critical || 0 }} ({{ priorityPct(priorityCounts.critical) }}%)</span>
-              </div>
-              <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                <div class="h-full bg-rose-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.critical) }" />
-              </div>
-            </div>
-
-            <!-- High -->
-            <div>
-              <div class="flex justify-between text-xs font-semibold mb-1">
-                <span class="text-amber-600 dark:text-amber-400">High</span>
-                <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.high || 0 }} ({{ priorityPct(priorityCounts.high) }}%)</span>
-              </div>
-              <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                <div class="h-full bg-amber-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.high) }" />
-              </div>
-            </div>
-
-            <!-- Medium -->
-            <div>
-              <div class="flex justify-between text-xs font-semibold mb-1">
-                <span class="text-blue-600 dark:text-blue-400">Medium</span>
-                <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.medium || 0 }} ({{ priorityPct(priorityCounts.medium) }}%)</span>
-              </div>
-              <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                <div class="h-full bg-blue-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.medium) }" />
-              </div>
-            </div>
-
-            <!-- Low -->
-            <div>
-              <div class="flex justify-between text-xs font-semibold mb-1">
-                <span class="text-slate-500 dark:text-slate-400">Low</span>
-                <span class="text-slate-700 dark:text-slate-300">{{ priorityCounts.low || 0 }} ({{ priorityPct(priorityCounts.low) }}%)</span>
-              </div>
-              <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                <div class="h-full bg-slate-400 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts.low) }" />
-              </div>
-            </div>
+          <div v-if="!panels?.lowStockItems?.length" class="py-12 text-center text-slate-400 text-xs">
+            No stock replenishment flags active at this time.
           </div>
-        </div>
 
-        <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
-          <RouterLink
-            to="/super-admin/logs"
-            class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center justify-between"
-          >
-            <span>Review System Audit Trail</span>
-            <span>→</span>
-          </RouterLink>
+          <div v-else class="mt-3 overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                  <th class="py-2 font-semibold">Product Name</th>
+                  <th class="py-2 font-semibold">SKU</th>
+                  <th class="py-2 font-semibold text-right">On Hand</th>
+                  <th class="py-2 font-semibold text-right">Reorder Point</th>
+                  <th class="py-2 font-semibold text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                <tr
+                  v-for="item in (panels?.lowStockItems || []).slice(0, 5)"
+                  :key="item.productId"
+                  class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
+                >
+                  <td class="py-2.5 font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
+                    {{ item.productName }}
+                  </td>
+                  <td class="py-2.5 font-mono text-slate-500 dark:text-slate-400">
+                    {{ item.sku }}
+                  </td>
+                  <td class="py-2.5 text-right font-bold text-slate-900 dark:text-white">
+                    {{ item.currentStock }}
+                  </td>
+                  <td class="py-2.5 text-right text-slate-500 dark:text-slate-400">
+                    {{ item.reorderPoint }}
+                  </td>
+                  <td class="py-2.5 text-right">
+                    <StatusBadge :status="item.status" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- Critical Stock Attention Table -->
-      <div class="lg:col-span-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
+      <!-- Recent System Movements Stream -->
+      <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-            Attention Items & Stock Depletion
-          </h2>
-          <span class="text-xs text-slate-500 dark:text-slate-400">
-            {{ panels?.lowStockItems?.length || 0 }} flagged
-          </span>
+          <div>
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+              Recent Inventory Movements Stream
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Operational inbound and outbound ledger transactions
+            </p>
+          </div>
         </div>
 
-        <div v-if="!panels?.lowStockItems?.length" class="py-12 text-center text-slate-400 text-xs">
-          No stock replenishment flags active at this time.
+        <div v-if="!panels?.recentMovements?.length" class="py-12 text-center text-slate-400 text-xs">
+          No recent stock ledger movements recorded.
         </div>
 
         <div v-else class="mt-3 overflow-x-auto">
           <table class="w-full text-left text-xs">
             <thead>
               <tr class="text-slate-400 border-b border-slate-100 dark:border-slate-800">
-                <th class="py-2 font-semibold">Product Name</th>
+                <th class="py-2 font-semibold">Product</th>
                 <th class="py-2 font-semibold">SKU</th>
-                <th class="py-2 font-semibold text-right">On Hand</th>
-                <th class="py-2 font-semibold text-right">Reorder Point</th>
-                <th class="py-2 font-semibold text-right">Status</th>
+                <th class="py-2 font-semibold">Movement Type</th>
+                <th class="py-2 font-semibold text-right">Quantity</th>
+                <th class="py-2 font-semibold text-right">Timestamp</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
               <tr
-                v-for="item in (panels?.lowStockItems || []).slice(0, 5)"
-                :key="item.productId"
+                v-for="mov in (panels?.recentMovements || []).slice(0, 5)"
+                :key="mov.movement_id"
                 class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
               >
-                <td class="py-2.5 font-medium text-slate-900 dark:text-white truncate max-w-[180px]">
-                  {{ item.productName }}
+                <td class="py-2.5 font-medium text-slate-900 dark:text-white">
+                  {{ mov.product?.product_name || 'Item' }}
                 </td>
                 <td class="py-2.5 font-mono text-slate-500 dark:text-slate-400">
-                  {{ item.sku }}
+                  {{ mov.product?.sku || '—' }}
                 </td>
-                <td class="py-2.5 text-right font-bold text-slate-900 dark:text-white">
-                  {{ item.currentStock }}
+                <td class="py-2.5">
+                  <span
+                    :class="[
+                      'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
+                      mov.movement_type === 'in' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                      mov.movement_type === 'out' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
+                      'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
+                    ]"
+                  >
+                    {{ mov.movement_type }}
+                  </span>
+                </td>
+                <td class="py-2.5 text-right font-mono font-bold text-slate-900 dark:text-white">
+                  {{ mov.movement_type === 'out' ? '-' : '+' }}{{ mov.quantity }}
                 </td>
                 <td class="py-2.5 text-right text-slate-500 dark:text-slate-400">
-                  {{ item.reorderPoint }}
-                </td>
-                <td class="py-2.5 text-right">
-                  <StatusBadge :status="item.status" />
+                  {{ when(mov.date_created) }}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-    </div>
-
-    <!-- Recent System Movements Stream -->
-    <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-        <div>
-          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-            Recent Inventory Movements Stream
-          </h2>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Operational inbound and outbound ledger transactions
-          </p>
-        </div>
-      </div>
-
-      <div v-if="!panels?.recentMovements?.length" class="py-12 text-center text-slate-400 text-xs">
-        No recent stock ledger movements recorded.
-      </div>
-
-      <div v-else class="mt-3 overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="text-slate-400 border-b border-slate-100 dark:border-slate-800">
-              <th class="py-2 font-semibold">Product</th>
-              <th class="py-2 font-semibold">SKU</th>
-              <th class="py-2 font-semibold">Movement Type</th>
-              <th class="py-2 font-semibold text-right">Quantity</th>
-              <th class="py-2 font-semibold text-right">Timestamp</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-            <tr
-              v-for="mov in (panels?.recentMovements || []).slice(0, 5)"
-              :key="mov.movement_id"
-              class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
-            >
-              <td class="py-2.5 font-medium text-slate-900 dark:text-white">
-                {{ mov.product?.product_name || 'Item' }}
-              </td>
-              <td class="py-2.5 font-mono text-slate-500 dark:text-slate-400">
-                {{ mov.product?.sku || '—' }}
-              </td>
-              <td class="py-2.5">
-                <span
-                  :class="[
-                    'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
-                    mov.movement_type === 'in' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
-                    mov.movement_type === 'out' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
-                    'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
-                  ]"
-                >
-                  {{ mov.movement_type }}
-                </span>
-              </td>
-              <td class="py-2.5 text-right font-mono font-bold text-slate-900 dark:text-white">
-                {{ mov.movement_type === 'out' ? '-' : '+' }}{{ mov.quantity }}
-              </td>
-              <td class="py-2.5 text-right text-slate-500 dark:text-slate-400">
-                {{ when(mov.date_created) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </template>
   </div>
 </template>
