@@ -264,13 +264,8 @@ const submit = async () => {
           </div>
         </div>
 
-        <div class="mt-8 text-center space-y-2 text-xs text-slate-400">
+        <div class="mt-8 text-center text-xs text-slate-400">
           <p>Protected by role-based identity checks and session token verification.</p>
-          <p>
-            <RouterLink to="/super-admin/login" class="text-slate-500 hover:text-navy-700 underline font-medium">
-              Platform Administration Console
-            </RouterLink>
-          </p>
         </div>
       </div>
     </div>
