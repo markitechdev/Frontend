@@ -176,7 +176,7 @@ const submitAddUser = async () => {
 
     await superAdminApi.users.create(payload);
     showAddUserModal.value = false;
-    showSuccess(`Platform user "${payload.fullName}" created successfully and permanently persisted.`);
+    showSuccess(`User "${payload.fullName}" created successfully.`);
     await fetchUsers();
   } catch (err) {
     modalError.value = err.message || 'Failed to create platform user account.';
@@ -306,17 +306,14 @@ onMounted(() => {
       <div>
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
-            Platform Governance
-          </span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">
-            Cross-Tenant Scope
+            Administration
           </span>
         </div>
         <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-1">
-          Platform User Accounts
+          User Accounts
         </h1>
         <p class="text-sm text-slate-500 dark:text-slate-400">
-          Global directory and lifecycle management of administrators, managers, and operational staff.
+          Create accounts, assign roles, reset passwords and deactivate users.
         </p>
       </div>
 
@@ -325,7 +322,7 @@ onMounted(() => {
           type="button"
           @click="fetchUsers"
           :disabled="loading"
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-xs"
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm"
         >
           <svg :class="['w-3.5 h-3.5', loading ? 'animate-spin text-indigo-600' : 'text-slate-500']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -380,7 +377,7 @@ onMounted(() => {
     </div>
 
     <!-- Table Card -->
-    <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+    <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
       <!-- Toolbar -->
       <div class="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
@@ -389,7 +386,7 @@ onMounted(() => {
               v-model="search"
               type="search"
               placeholder="Search by name, email, username..."
-              class="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              class="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -399,7 +396,7 @@ onMounted(() => {
           <div class="flex items-center gap-2 w-full sm:w-auto">
             <select
               v-model="selectedRoleFilter"
-              class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="ALL">All Roles</option>
               <option v-for="r in roles" :key="r.role_id || r.roleId" :value="r.role_code || r.roleCode">
@@ -409,7 +406,7 @@ onMounted(() => {
 
             <select
               v-model="selectedStatusFilter"
-              class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="ALL">All Status</option>
               <option value="ACTIVE">Active Only</option>
@@ -540,13 +537,13 @@ onMounted(() => {
     <!-- ADD USER MODAL -->
     <div
       v-if="showAddUserModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
     >
       <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <div class="flex items-center gap-2">
             <span class="text-xl">👤</span>
-            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Create Platform User</h2>
+            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Create User Account</h2>
           </div>
           <button @click="showAddUserModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">✕</button>
         </div>
@@ -562,7 +559,7 @@ onMounted(() => {
               v-model="newUserForm.fullName"
               type="text"
               placeholder="e.g. Eleanor Vance"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
@@ -573,7 +570,7 @@ onMounted(() => {
                 v-model="newUserForm.username"
                 type="text"
                 placeholder="e.g. evance"
-                class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
               />
             </div>
             <div>
@@ -582,7 +579,7 @@ onMounted(() => {
                 v-model="newUserForm.email"
                 type="email"
                 placeholder="e.g. evance@domain.com"
-                class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           </div>
@@ -593,7 +590,7 @@ onMounted(() => {
               v-model="newUserForm.password"
               type="password"
               placeholder="••••••••••••"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
             />
           </div>
 
@@ -601,7 +598,7 @@ onMounted(() => {
             <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Assign Role *</label>
             <select
               v-model="newUserForm.roleId"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option disabled value="">Select an assigned role</option>
               <option
@@ -621,7 +618,7 @@ onMounted(() => {
                 v-model="newUserForm.position"
                 type="text"
                 placeholder="e.g. Inventory Analyst"
-                class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
             <div>
@@ -630,7 +627,7 @@ onMounted(() => {
                 v-model="newUserForm.contactNumber"
                 type="text"
                 placeholder="e.g. +63 912 345 6789"
-                class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+                class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
               />
             </div>
           </div>
@@ -660,7 +657,7 @@ onMounted(() => {
     <!-- CHANGE ROLE MODAL -->
     <div
       v-if="showChangeRoleModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
     >
       <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -688,7 +685,7 @@ onMounted(() => {
             <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">New Role Assignment *</label>
             <select
               v-model="changeRoleForm.newRoleId"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option disabled value="">Choose target role</option>
               <option
@@ -730,7 +727,7 @@ onMounted(() => {
     <!-- RESET PASSWORD MODAL -->
     <div
       v-if="showResetPasswordModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
     >
       <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -752,7 +749,7 @@ onMounted(() => {
               v-model="resetPasswordForm.newPassword"
               type="password"
               placeholder="••••••••••••"
-              class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 font-mono"
+              class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
             />
           </div>
         </div>
@@ -781,11 +778,11 @@ onMounted(() => {
     <!-- DELETE USER MODAL -->
     <div
       v-if="showDeleteUserModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
     >
       <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <h2 class="text-base font-bold text-rose-600">Delete Platform Account</h2>
+          <h2 class="text-base font-bold text-rose-600">Delete User Account</h2>
           <button @click="showDeleteUserModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">✕</button>
         </div>
 
@@ -829,7 +826,7 @@ onMounted(() => {
     <!-- DETAILS MODAL -->
     <div
       v-if="showDetailsModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
     >
       <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">

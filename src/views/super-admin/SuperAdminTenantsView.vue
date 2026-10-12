@@ -14,7 +14,7 @@ const fetchTenants = async () => {
     const res = await superAdminApi.getTenants();
     tenants.value = Array.isArray(res) ? res : [];
   } catch (e) {
-    error.value = e.message || 'Unable to retrieve client tenants.';
+    error.value = e.message || 'Unable to load organization details.';
   } finally {
     loading.value = false;
   }
@@ -30,17 +30,14 @@ onMounted(fetchTenants);
       <div>
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
-            Multi-Tenancy Infrastructure
-          </span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-            Strict Partitioning Active
+            Organization & Security
           </span>
         </div>
         <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-1">
-          Client Tenants & Workspaces
+          Organization
         </h1>
         <p class="text-sm text-slate-500 dark:text-slate-400">
-          Partition boundaries, tenant isolation policies, and enterprise subscriptions.
+          The organization that uses this system, with its user and product totals.
         </p>
       </div>
 
@@ -48,12 +45,12 @@ onMounted(fetchTenants);
         type="button"
         @click="fetchTenants"
         :disabled="loading"
-        class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition shadow-xs"
+        class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition shadow-sm"
       >
         <svg :class="['w-3.5 h-3.5', loading ? 'animate-spin text-indigo-600' : 'text-slate-500']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
-        <span>Refresh Tenants</span>
+        <span>Refresh</span>
       </button>
     </div>
 
@@ -80,19 +77,18 @@ onMounted(fetchTenants);
     <TableSkeleton v-if="loading" :rows="3" :cols="4" class="p-4 bg-white dark:bg-slate-900 rounded-xl" />
 
     <!-- Tenants Table -->
-    <div v-else class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-      <p class="px-4 py-3 text-[11px] text-amber-800 bg-amber-50 border-b border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900">
-        This deployment runs as a single organization: every account and record belongs to this one workspace.
-        Separate client workspaces need an organizations table and per-organization scoping on every query.
+    <div v-else class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <p class="px-4 py-3 text-xs text-slate-600 bg-slate-50 border-b border-slate-200 dark:bg-slate-800/40 dark:text-slate-300 dark:border-slate-800">
+        This system serves one organization. All user accounts, products and records belong to it.
       </p>
-      <div v-if="!tenants.length" class="py-16 text-center text-slate-400 text-xs">No client workspaces registered yet.</div>
+      <div v-if="!tenants.length" class="py-16 text-center text-slate-400 text-xs">No organization details available.</div>
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 border-b border-slate-200 dark:border-slate-800">
             <tr>
-              <th class="py-3 px-4 font-semibold">Workspace Name</th>
-              <th class="py-3 px-4 font-semibold">Tenant ID</th>
-              <th class="py-3 px-4 font-semibold">Subscription Plan</th>
+              <th class="py-3 px-4 font-semibold">Organization</th>
+              <th class="py-3 px-4 font-semibold">ID</th>
+              <th class="py-3 px-4 font-semibold">Plan</th>
               <th class="py-3 px-4 font-semibold text-right">Users (active)</th>
               <th class="py-3 px-4 font-semibold text-right">Products</th>
               <th class="py-3 px-4 font-semibold text-right">Status</th>

@@ -25,7 +25,7 @@ const MODULE_TITLES = {
   alerts: 'Alerts & Threshold Notifications',
   suppliers: 'Supplier Accounts',
   users: 'User Accounts & Security',
-  roles: 'Roles & Clearance Matrix',
+  roles: 'Roles & Permissions',
   reports: 'Reports & Analytics',
   finance: 'Financial Valuation',
   logs: 'System Audit Logs',
@@ -327,17 +327,14 @@ onMounted(fetchData);
       <div>
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
-            Platform Governance
-          </span>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-            Authorization Matrix
+            Administration
           </span>
         </div>
         <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-1">
-          Roles & Clearance Hierarchy
+          Roles & Permissions
         </h1>
         <p class="text-sm text-slate-500 dark:text-slate-400">
-          Global capability matrix mapping roles to tenant and platform boundaries.
+          Define what each role can view and change in the system.
         </p>
       </div>
 
@@ -346,18 +343,18 @@ onMounted(fetchData);
           type="button"
           @click="fetchData"
           :disabled="loading"
-          class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-xs"
+          class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm"
         >
           <svg :class="['w-3.5 h-3.5', loading ? 'animate-spin text-indigo-600' : 'text-slate-500']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          <span>Refresh Matrix</span>
+          <span>Refresh</span>
         </button>
 
         <button
           type="button"
           @click="openCreateModal"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-xs"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
         >
           <span>+</span>
           <span>Create Role</span>
@@ -393,7 +390,7 @@ onMounted(fetchData);
       <div
         v-for="role in roles"
         :key="role.roleId || role.role_id"
-        class="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow"
+        class="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"
       >
         <div>
           <!-- Card Header -->
@@ -486,7 +483,7 @@ onMounted(fetchData);
             @click="openEditModal(role)"
             class="px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition font-medium"
           >
-            {{ role.roleCode === 'super_admin' ? 'View Clearance' : 'Edit Matrix' }}
+            {{ role.roleCode === 'super_admin' ? 'View permissions' : 'Edit permissions' }}
           </button>
 
           <div class="flex items-center gap-1.5">
@@ -684,7 +681,7 @@ onMounted(fetchData);
               class="select"
               :disabled="activeRole?.isSystem"
             >
-              <option :value="true">Active Operational Clearance</option>
+              <option :value="true">Active</option>
               <option :value="false">Deactivated (Blocked from Users)</option>
             </select>
           </div>
@@ -732,7 +729,7 @@ onMounted(fetchData);
                 Grant Authoritative Permissions
               </p>
               <p class="text-[11px] text-slate-500">
-                {{ activeRole?.roleCode === 'super_admin' ? 'Universal Access (Root Tier)' : `${editForm.permissionIds.size} of ${permissions.length} selected` }}
+                {{ activeRole?.roleCode === 'super_admin' ? 'Full access (all permissions)' : `${editForm.permissionIds.size} of ${permissions.length} selected` }}
               </p>
             </div>
           </div>
