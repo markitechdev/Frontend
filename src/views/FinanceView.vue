@@ -1,35 +1,43 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { inventoryApi, movementsApi } from '@/api';
-import { useToastStore } from '@/stores/toast';
+import { reportsApi } from '@/api';
 import StatCard from '@/components/ui/StatCard.vue';
 
-const toast = useToastStore();
+// Uses /api/reports/* (reports.view). The previous version called
+// /movements/summary, which Finance Admin has no permission for, so the whole
+// page was redirected to Access Denied.
 const summary = ref(null);
 const rows = ref([]);
-const movementSummary = ref(null);
+const shrink = ref(null);
 const loading = ref(true);
+const error = ref('');
 
-const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const pesoShort = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Math.round(Number(n)).toLocaleString('en-PH')}`;
 const num = (n) => (n === null || n === undefined || n === '') ? '--' : Number(n).toLocaleString();
 
-const topByValue = computed(() =>
-  [...rows.value]
-    .map((r) => ({ ...r, value: r.current_stock * Number(r.product?.unit_price || 0) }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 10));
+const topByValue = computed(() => [...rows.value].sort((a, b) => b.totalValue - a.totalValue).slice(0, 10));
 
-onMounted(async () => {
+const capitalAtRisk = computed(() => rows.value
+  .filter((r) => r.stockStatus === 'low_stock' || r.stockStatus === 'out_of_stock')
+  .reduce((s, r) => s + r.totalValue, 0));
+
+const load = async () => {
+  loading.value = true;
+  error.value = '';
   try {
-    const [sum, inv, mov] = await Promise.all([
-      inventoryApi.summary(), inventoryApi.list({}), movementsApi.summary({}),
-    ]);
-    summary.value = sum;
-    rows.value = inv.data;
-    movementSummary.value = mov;
-  } catch (e) { toast.error(e.message); }
-  finally { loading.value = false; }
-});
+    const [inv, shr] = await Promise.all([reportsApi.inventorySummary({}), reportsApi.shrinkage({})]);
+    rows.value = inv.data || [];
+    summary.value = inv.meta?.summary || null;
+    shrink.value = shr.meta?.summary || null;
+  } catch (e) {
+    error.value = e.message;
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(load);
 </script>
 
 <template>
@@ -48,10 +56,10 @@ onMounted(async () => {
     </div>
 
     <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
-      <StatCard label="Inventory Valuation" :value="peso(summary?.totalValue)" sublabel="At current unit prices" tone="green" />
-      <StatCard label="Total Units" :value="num(summary?.totalQuantity)" tone="blue" />
-      <StatCard label="Capital in Low Stock" :value="num(summary?.lowStock)" sublabel="Items at risk of stockout" tone="amber" />
-      <StatCard label="Shrinkage Loss" :value="peso(movementSummary?.shrinkage?.value)" :sublabel="movementSummary?.shrinkage?.units != null ? `${num(movementSummary.shrinkage.units)} units written off` : '--'" tone="red" />
+      <StatCard label="Inventory Valuation" :value="loading ? '--' : pesoShort(summary?.totalValuation)" sublabel="At current unit prices" tone="green" />
+      <StatCard label="Total Units" :value="loading ? '--' : num(summary?.totalUnits)" tone="blue" />
+      <StatCard label="Capital in Low / Out of Stock" :value="loading ? '--' : pesoShort(capitalAtRisk)" :sublabel="loading ? '' : `${num((summary?.lowStockCount || 0) + (summary?.outOfStockCount || 0))} item(s) at risk`" tone="amber" />
+      <StatCard label="Shrinkage Loss" :value="loading ? '--' : pesoShort(shrink?.totalShrinkageValue)" :sublabel="shrink ? `${num(shrink.totalShrinkageUnits)} units written off` : ''" tone="red" />
     </div>
 
     <div class="card">
@@ -67,13 +75,19 @@ onMounted(async () => {
           </thead>
           <tbody>
             <tr v-if="loading"><td colspan="5" class="text-center py-12 text-slate-400">Loading…</td></tr>
+            <tr v-else-if="error">
+              <td colspan="5" class="text-center py-10">
+                <p class="text-sm text-red-600">{{ error }}</p>
+                <button class="btn-ghost btn-sm mt-2" @click="load">Try again</button>
+              </td>
+            </tr>
             <tr v-else-if="!topByValue.length"><td colspan="5" class="text-center py-12 text-slate-400">No inventory recorded.</td></tr>
-            <tr v-else v-for="r in topByValue" :key="r.inventory_id">
-              <td class="font-mono text-xs text-slate-500">{{ r.product.sku }}</td>
-              <td class="font-medium text-slate-800">{{ r.product.product_name }}</td>
-              <td class="text-right tabular-nums">{{ r.current_stock }}</td>
-              <td class="text-right tabular-nums text-slate-600">{{ peso(r.product.unit_price) }}</td>
-              <td class="text-right tabular-nums font-semibold">{{ peso(r.value) }}</td>
+            <tr v-else v-for="r in topByValue" :key="r.inventoryId">
+              <td class="font-mono text-xs text-slate-500">{{ r.sku }}</td>
+              <td class="font-medium text-slate-800">{{ r.productName }}</td>
+              <td class="text-right tabular-nums">{{ r.currentStock }}</td>
+              <td class="text-right tabular-nums text-slate-600">{{ peso(r.unitPrice) }}</td>
+              <td class="text-right tabular-nums font-semibold">{{ peso(r.totalValue) }}</td>
             </tr>
           </tbody>
         </table>

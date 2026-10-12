@@ -1,104 +1,153 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
-import { inventoryApi, movementsApi, alertsApi } from '@/api';
+import { reportsApi } from '@/api';
 import { useToastStore } from '@/stores/toast';
 import StatCard from '@/components/ui/StatCard.vue';
 import StatCardSkeleton from '@/components/ui/StatCardSkeleton.vue';
-import Skeleton from '@/components/ui/Skeleton.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
+import TableSkeleton from '@/components/ui/TableSkeleton.vue';
+import HorizontalBarChart from '@/components/ui/HorizontalBarChart.vue';
 
+/*
+ * Uses the server-side /api/reports/* endpoints, which only require
+ * reports.view. (The old page called the inventory, movements and alerts
+ * endpoints directly, so roles with reports.view but not inventory.view -
+ * e.g. Staff Admin - were sent to Access Denied.)
+ */
 const toast = useToastStore();
 
-const summary = ref(null);
-const movementSummary = ref(null);
-const alertSummary = ref(null);
 const inventoryRows = ref([]);
-const loading = ref(true);
-const error = ref(null);
+const inventorySummary = ref(null);
+const shrinkRows = ref([]);
+const shrinkSummary = ref(null);
 
-const range = reactive({ from: '', to: '' });
+const loadingInventory = ref(true);
+const loadingShrink = ref(true);
+const inventoryError = ref('');
+const shrinkError = ref('');
+
 const reportType = ref('stock_overview');
+const chartMetric = ref('value');
+const filters = reactive({ categoryId: '', from: '', to: '' });
 
-const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const pesoShort = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Math.round(Number(n)).toLocaleString('en-PH')}`;
 const num  = (n) => (n === null || n === undefined || n === '') ? '--' : Number(n).toLocaleString();
+const when = (d) => new Date(d).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
 
-/** Groups current stock value by category, for the bar chart. */
+/* ------------------------------------------------------------------ loading */
+let invSeq = 0;
+const loadInventory = async () => {
+  const seq = ++invSeq;
+  loadingInventory.value = true;
+  inventoryError.value = '';
+  try {
+    const res = await reportsApi.inventorySummary({ categoryId: filters.categoryId });
+    if (seq !== invSeq) return;
+    inventoryRows.value = res.data || [];
+    inventorySummary.value = res.meta?.summary || null;
+  } catch (e) {
+    if (seq === invSeq) inventoryError.value = e.message;
+  } finally {
+    if (seq === invSeq) loadingInventory.value = false;
+  }
+};
+
+/** Browser-local calendar dates -> exact UTC instants, so "to" covers the whole local day. */
+const toRange = () => ({
+  from: filters.from ? new Date(`${filters.from}T00:00:00`).toISOString() : undefined,
+  to: filters.to ? new Date(`${filters.to}T23:59:59.999`).toISOString() : undefined,
+});
+
+let shrinkSeq = 0;
+const loadShrinkage = async () => {
+  const seq = ++shrinkSeq;
+  loadingShrink.value = true;
+  shrinkError.value = '';
+  try {
+    const res = await reportsApi.shrinkage({ ...toRange(), categoryId: filters.categoryId });
+    if (seq !== shrinkSeq) return;
+    shrinkRows.value = res.data || [];
+    shrinkSummary.value = res.meta?.summary || null;
+  } catch (e) {
+    if (seq === shrinkSeq) shrinkError.value = e.message;
+  } finally {
+    if (seq === shrinkSeq) loadingShrink.value = false;
+  }
+};
+
+const loadAll = () => Promise.all([loadInventory(), loadShrinkage()]);
+
+const dateError = computed(() =>
+  filters.from && filters.to && filters.from > filters.to ? '"From" must be on or before "To".' : '');
+
+watch(() => filters.categoryId, loadAll);
+watch(() => [filters.from, filters.to], () => { if (!dateError.value) loadShrinkage(); });
+onMounted(loadAll);
+
+/* ------------------------------------------------------------- derived data */
+// Category list comes from the unfiltered first load so the dropdown does not shrink as you filter.
+const categoryOptions = ref([]);
+watch(inventoryRows, (rows) => {
+  if (filters.categoryId) return;
+  const map = new Map();
+  rows.forEach((r) => { if (r.categoryId) map.set(r.categoryId, r.category); });
+  categoryOptions.value = [...map].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+});
+
 const byCategory = computed(() => {
   const map = {};
   for (const r of inventoryRows.value) {
-    const key = r.product?.category?.category_name || 'Uncategorised';
-    map[key] ||= { name: key, quantity: 0, value: 0, items: 0 };
-    map[key].quantity += r.current_stock;
-    map[key].value += r.current_stock * Number(r.product?.unit_price || 0);
+    const key = r.category || 'Unassigned';
+    map[key] ||= { label: key, value: 0, units: 0, items: 0 };
+    map[key].value += Number(r.totalValue || 0);
+    map[key].units += Number(r.currentStock || 0);
     map[key].items += 1;
   }
-  return Object.values(map).sort((a, b) => b.value - a.value);
+  return Object.values(map);
 });
 
-const maxCategoryValue = computed(() => Math.max(1, ...byCategory.value.map((c) => c.value)));
+const chartItems = computed(() => byCategory.value.map((c) => ({
+  label: c.label,
+  value: chartMetric.value === 'value' ? c.value : c.units,
+  detail: chartMetric.value === 'value'
+    ? `${num(c.units)} units across ${c.items} product(s)`
+    : `${peso(c.value)} across ${c.items} product(s)`,
+})));
 
-const totalCategoryValuation = computed(() =>
-  byCategory.value.reduce((acc, c) => acc + c.value, 0)
-);
+const lowStockRows = computed(() => inventoryRows.value
+  .filter((r) => ['low_stock', 'out_of_stock', 'reorder'].includes(r.stockStatus))
+  .sort((a, b) => a.currentStock - b.currentStock));
 
-const categorySharePct = (val) => {
-  if (!totalCategoryValuation.value || !val) return '0.0';
-  return ((val / totalCategoryValuation.value) * 100).toFixed(1);
-};
+const tableRows = computed(() => (reportType.value === 'low_stock' ? lowStockRows.value : inventoryRows.value));
 
-const categoryBarWidth = (val) => {
-  if (!maxCategoryValue.value || !val) return '0%';
-  const rawPct = (val / maxCategoryValue.value) * 100;
-  return `${Math.max(2, rawPct)}%`;
-};
-
-
-const lowStockRows = computed(() =>
-  inventoryRows.value
-    .filter((r) => ['low_stock', 'out_of_stock', 'reorder'].includes(r.stock_status))
-    .sort((a, b) => a.current_stock - b.current_stock));
-
-const load = async () => {
-  loading.value = true;
-  try {
-    const [sum, inv, mov, alr] = await Promise.all([
-      inventoryApi.summary(),
-      inventoryApi.list({}),
-      movementsApi.summary({ from: range.from || undefined, to: range.to || undefined }),
-      alertsApi.summary(),
-    ]);
-    summary.value = sum;
-    inventoryRows.value = inv.data;
-    movementSummary.value = mov;
-    alertSummary.value = alr;
-  } catch (e) { toast.error(e.message); }
-  finally { loading.value = false; }
-};
-
-/** Exports the visible report as CSV — no library, no server round trip. */
+/* ------------------------------------------------------------------- export */
 const exportCsv = () => {
-  let headers, lines, name;
+  let headers;
+  let lines;
+  let name;
 
   if (reportType.value === 'low_stock') {
     name = 'low-stock-report';
-    headers = ['SKU', 'Product', 'Category', 'Current Stock', 'Minimum', 'Reorder Point', 'Status'];
-    lines = lowStockRows.value.map((r) => [
-      r.product.sku, r.product.product_name, r.product.category?.category_name || '',
-      r.current_stock, r.minimum_stock, r.reorder_point, r.stock_status,
-    ]);
+    headers = ['SKU', 'Product', 'Category', 'Supplier', 'Current Stock', 'Minimum', 'Reorder Point', 'Status'];
+    lines = lowStockRows.value.map((r) => [r.sku, r.productName, r.category, r.supplier, r.currentStock, r.minimumStock, r.reorderPoint, r.stockStatus]);
   } else if (reportType.value === 'category') {
     name = 'category-valuation';
-    headers = ['Category', 'Items', 'Quantity', 'Stock Value'];
-    lines = byCategory.value.map((c) => [c.name, c.items, c.quantity, c.value.toFixed(2)]);
+    headers = ['Category', 'Products', 'Units', 'Stock Value'];
+    lines = byCategory.value.map((c) => [c.label, c.items, c.units, c.value.toFixed(2)]);
+  } else if (reportType.value === 'shrinkage') {
+    name = 'shrinkage-report';
+    headers = ['Date', 'SKU', 'Product', 'Category', 'Type', 'Units', 'Unit Price', 'Loss', 'Reason', 'Recorded By'];
+    lines = shrinkRows.value.map((r) => [r.dateRecorded, r.sku, r.productName, r.category, r.movementType, r.quantity, r.unitPrice.toFixed(2), r.shrinkageValue.toFixed(2), r.reason, r.recordedBy]);
   } else {
     name = 'stock-overview';
     headers = ['SKU', 'Product', 'Category', 'Supplier', 'Stock', 'Unit Price', 'Stock Value', 'Status'];
-    lines = inventoryRows.value.map((r) => [
-      r.product.sku, r.product.product_name,
-      r.product.category?.category_name || '', r.product.supplier?.supplier_name || '',
-      r.current_stock, Number(r.product.unit_price).toFixed(2),
-      (r.current_stock * Number(r.product.unit_price || 0)).toFixed(2), r.stock_status,
-    ]);
+    lines = inventoryRows.value.map((r) => [r.sku, r.productName, r.category, r.supplier, r.currentStock, r.unitPrice.toFixed(2), r.totalValue.toFixed(2), r.stockStatus]);
+  }
+
+  if (!lines.length) {
+    toast.info('Nothing to export for this report yet.');
+    return;
   }
 
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
@@ -112,183 +161,188 @@ const exportCsv = () => {
   URL.revokeObjectURL(url);
   toast.success('Report exported.');
 };
-
-watch(() => [range.from, range.to], load);
-onMounted(load);
 </script>
 
 <template>
   <div class="space-y-5">
-    <div class="grid gap-4 grid-cols-2 lg:grid-cols-5">
-      <StatCard label="Stock Value" :value="peso(summary.totalValue)" tone="green" />
-      <StatCard label="Total Products" :value="num(summary.totalProducts)"
-                :sublabel="`${num(summary.totalQuantity)} units`" tone="blue" />
-      <StatCard label="Low Stock" :value="num(summary.lowStock)" tone="amber" />
-      <StatCard label="Out of Stock" :value="num(summary.outOfStock)" tone="red" />
-      <StatCard label="Active Alerts" :value="num(alertSummary?.total)" tone="red" />
+    <!-- KPI cards -->
+    <div v-if="loadingInventory && !inventorySummary" class="grid gap-4 grid-cols-2 lg:grid-cols-5">
+      <StatCardSkeleton v-for="i in 5" :key="i" />
+    </div>
+    <div v-else class="grid gap-4 grid-cols-2 lg:grid-cols-5">
+      <StatCard label="Stock Value" :value="pesoShort(inventorySummary?.totalValuation)" tone="green" />
+      <StatCard label="Products" :value="num(inventorySummary?.totalProducts)"
+                :sublabel="`${num(inventorySummary?.totalUnits)} units on hand`" tone="blue" />
+      <StatCard label="Low Stock" :value="num(inventorySummary?.lowStockCount)" tone="amber" />
+      <StatCard label="Reorder Due" :value="num(inventorySummary?.reorderCount)" tone="blue" />
+      <StatCard label="Out of Stock" :value="num(inventorySummary?.outOfStockCount)" tone="red" />
     </div>
 
-    <div class="card p-4 flex flex-wrap items-center gap-3">
-      <select v-model="reportType" class="select w-auto min-w-[190px]">
-        <option value="stock_overview">Stock Overview</option>
-        <option value="low_stock">Low Stock Report</option>
-        <option value="category">Category Valuation</option>
-      </select>
-      <div class="flex items-center gap-2">
-        <label class="text-xs text-slate-500">From</label>
-        <input v-model="range.from" type="date" class="input w-auto" />
+    <!-- filters: one row above everything they affect -->
+    <div class="card p-4 flex flex-wrap items-end gap-3">
+      <div>
+        <label class="text-xs text-slate-500 block mb-1" for="report-type">Report</label>
+        <select id="report-type" v-model="reportType" class="select w-auto min-w-[190px]">
+          <option value="stock_overview">Stock Overview</option>
+          <option value="low_stock">Low Stock &amp; Reorder</option>
+          <option value="category">Category Valuation</option>
+          <option value="shrinkage">Shrinkage (Damaged &amp; Missing)</option>
+        </select>
       </div>
-      <div class="flex items-center gap-2">
-        <label class="text-xs text-slate-500">To</label>
-        <input v-model="range.to" type="date" class="input w-auto" />
+      <div>
+        <label class="text-xs text-slate-500 block mb-1" for="report-category">Category</label>
+        <select id="report-category" v-model="filters.categoryId" class="select w-auto min-w-[170px]">
+          <option value="">All categories</option>
+          <option v-for="c in categoryOptions" :key="c.id" :value="c.id">{{ c.name }}</option>
+        </select>
       </div>
-      <button class="btn-primary btn-sm ml-auto" @click="exportCsv">Export CSV</button>
+      <div>
+        <label class="text-xs text-slate-500 block mb-1" for="report-from">Shrinkage from</label>
+        <input id="report-from" v-model="filters.from" type="date" class="input w-auto" :max="filters.to || undefined" />
+      </div>
+      <div>
+        <label class="text-xs text-slate-500 block mb-1" for="report-to">to</label>
+        <input id="report-to" v-model="filters.to" type="date" class="input w-auto" :min="filters.from || undefined" />
+      </div>
+      <button v-if="filters.categoryId || filters.from || filters.to" class="btn-ghost btn-sm"
+              @click="filters.categoryId = ''; filters.from = ''; filters.to = ''">Clear</button>
+      <button class="btn-primary btn-sm ml-auto" :disabled="loadingInventory || loadingShrink" @click="exportCsv">Export CSV</button>
+      <p v-if="dateError" class="w-full text-xs text-red-600">{{ dateError }}</p>
     </div>
 
-    <!-- loading skeleton state -->
-    <div v-if="loading" class="space-y-5">
-      <div class="card p-5 space-y-4 border-slate-200">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-100">
-          <Skeleton width="180px" height="1.25rem" />
+    <!-- horizontal graph -->
+    <div class="card min-w-0">
+      <div class="card-header flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 class="card-title">{{ chartMetric === 'value' ? 'Stock Value by Category' : 'Units on Hand by Category' }}</h3>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Total: <strong class="text-slate-800 tabular-nums">{{ chartMetric === 'value' ? peso(inventorySummary?.totalValuation) : `${num(inventorySummary?.totalUnits)} units` }}</strong>
+          </p>
         </div>
-        <div class="space-y-3 pt-2">
-          <div v-for="i in 4" :key="`c-skel-${i}`" class="space-y-1.5">
-            <div class="flex justify-between">
-              <Skeleton width="120px" height="0.875rem" />
-              <Skeleton width="90px" height="0.875rem" />
-            </div>
-            <Skeleton width="100%" height="0.5rem" rounded="rounded-full" />
-          </div>
+        <div class="inline-flex rounded-lg border border-slate-200 p-0.5 text-xs" role="group" aria-label="Chart measure">
+          <button type="button" class="px-2.5 py-1 rounded-md"
+                  :class="chartMetric === 'value' ? 'bg-navy-700 text-white' : 'text-slate-600'"
+                  :aria-pressed="chartMetric === 'value'" @click="chartMetric = 'value'">Value</button>
+          <button type="button" class="px-2.5 py-1 rounded-md"
+                  :class="chartMetric === 'units' ? 'bg-navy-700 text-white' : 'text-slate-600'"
+                  :aria-pressed="chartMetric === 'units'" @click="chartMetric = 'units'">Units</button>
         </div>
       </div>
-      <div class="grid gap-4 lg:grid-cols-3">
-        <div class="card p-5 space-y-3 border-slate-200">
-          <Skeleton width="140px" height="1.25rem" />
-          <Skeleton width="100%" height="3rem" />
-        </div>
-        <div class="card p-5 lg:col-span-2 space-y-3 border-slate-200">
-          <Skeleton width="160px" height="1.25rem" />
-          <div class="space-y-2 pt-2">
-            <div v-for="j in 4" :key="`r-skel-${j}`" class="flex justify-between">
-              <Skeleton width="20%" height="0.875rem" />
-              <Skeleton width="35%" height="0.875rem" />
-              <Skeleton width="15%" height="0.875rem" />
-              <Skeleton width="20%" height="0.875rem" />
-            </div>
-          </div>
-        </div>
+      <div class="card-body">
+        <HorizontalBarChart
+          :items="chartItems"
+          :format-value="chartMetric === 'value' ? peso : (v) => `${num(v)} u`"
+          :measure-label="chartMetric === 'value' ? 'stock value by category' : 'units by category'"
+          :loading="loadingInventory"
+          :error="inventoryError"
+          empty-text="No inventory in this selection."
+          @retry="loadInventory"
+        />
       </div>
     </div>
 
-    <!-- error state with retry -->
-    <div v-else-if="error" class="card p-8 border-red-200 bg-red-50/30 text-center space-y-3">
-      <div class="h-12 w-12 rounded-full bg-red-100 text-red-600 mx-auto grid place-items-center text-xl font-bold">
-        ⚠
-      </div>
-      <h3 class="text-base font-semibold text-slate-800">Unable to generate reports</h3>
-      <p class="text-sm text-slate-600 max-w-md mx-auto">{{ error }}</p>
-      <div class="pt-2">
-        <button class="btn-primary btn-sm" @click="load">Try Again</button>
-      </div>
-    </div>
-
-    <template v-else>
-      <!-- category valuation chart -->
-      <div class="card">
-        <div class="card-header flex flex-wrap items-center justify-between gap-2">
-          <h3 class="card-title">Stock Value by Category</h3>
-          <span class="text-xs text-slate-500">
-            Total Valuation: <strong class="text-slate-800 font-mono">{{ peso(totalCategoryValuation) }}</strong>
-          </span>
+    <div class="grid gap-4 lg:grid-cols-3">
+      <!-- shrinkage summary -->
+      <div class="card lg:col-span-1 min-w-0">
+        <div class="card-header">
+          <h3 class="card-title">Shrinkage Summary</h3>
+          <span class="text-[11px] text-slate-400">{{ filters.from || filters.to ? 'Selected dates' : 'All time' }}</span>
         </div>
-        <div class="card-body space-y-3.5">
-          <div v-if="!byCategory.length" class="text-sm text-slate-400 text-center py-8">
-            <p class="font-medium">No category inventory to chart.</p>
-            <p class="text-xs text-slate-400 mt-1">Add items or update filters to see category valuation distribution.</p>
+        <div class="card-body space-y-3 text-sm">
+          <template v-if="loadingShrink">
+            <div v-for="i in 3" :key="i" class="h-4 rounded bg-slate-200 animate-pulse" />
+          </template>
+          <div v-else-if="shrinkError" class="text-center">
+            <p class="text-sm text-red-600">{{ shrinkError }}</p>
+            <button class="btn-ghost btn-sm mt-2" @click="loadShrinkage">Try again</button>
           </div>
-          <div
-            v-for="c in byCategory"
-            :key="c.name"
-            class="group relative space-y-1.5"
-            :title="`${c.name}: ${peso(c.value)} (${categorySharePct(c.value)}% of total value, ${num(c.quantity)} units in ${c.items} items)`"
-          >
-            <div class="flex flex-wrap items-center justify-between text-sm gap-2">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="text-slate-800 font-medium truncate">{{ c.name }}</span>
-                <span class="text-[11px] font-mono font-medium text-navy-800 bg-navy-50 border border-navy-100 rounded px-1.5 py-0.5">
-                  {{ categorySharePct(c.value) }}%
-                </span>
-              </div>
-              <div class="text-xs sm:text-sm text-slate-500 tabular-nums">
-                <span class="font-semibold text-slate-800 font-mono">{{ peso(c.value) }}</span>
-                <span class="text-slate-300 mx-1.5">•</span>
-                <span>{{ num(c.quantity) }} units</span>
-              </div>
-            </div>
-            <div class="h-2.5 rounded-full bg-slate-100 overflow-hidden relative">
-              <div
-                class="h-full rounded-full bg-navy-700 group-hover:bg-navy-600 transition-all duration-500 ease-out"
-                :style="{ width: categoryBarWidth(c.value) }"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- shrinkage -->
-      <div class="grid gap-4 lg:grid-cols-3">
-        <div class="card lg:col-span-1">
-          <div class="card-header"><h3 class="card-title">Shrinkage Summary</h3></div>
-          <div class="card-body space-y-3 text-sm">
-            <div class="flex justify-between"><span class="text-slate-500">Damaged units</span>
-              <span class="font-semibold">{{ movementSummary?.byType?.damaged?.units != null ? movementSummary.byType.damaged.units : '--' }}</span></div>
-            <div class="flex justify-between"><span class="text-slate-500">Missing units</span>
-              <span class="font-semibold">{{ movementSummary?.byType?.missing?.units != null ? movementSummary.byType.missing.units : '--' }}</span></div>
+          <template v-else>
+            <div class="flex justify-between"><span class="text-slate-500">Damaged</span>
+              <span class="font-semibold tabular-nums">{{ num(shrinkSummary?.breakdown?.damaged?.units) }} units</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Missing</span>
+              <span class="font-semibold tabular-nums">{{ num(shrinkSummary?.breakdown?.missing?.units) }} units</span></div>
             <div class="flex justify-between pt-2 border-t border-slate-100">
               <span class="text-slate-700 font-medium">Estimated loss</span>
-              <span class="font-bold text-red-600">{{ peso(movementSummary.shrinkage?.value) }}</span>
+              <span class="font-bold text-red-600 tabular-nums">{{ peso(shrinkSummary?.totalShrinkageValue) }}</span>
             </div>
             <p class="text-[11px] text-slate-400 pt-1">
-              Calculated from recorded damaged and missing movements at current unit price.
+              From recorded damaged and missing movements (including cycle-count variances) at current unit price.
             </p>
-          </div>
-        </div>
-
-        <div class="card lg:col-span-2">
-          <div class="card-header">
-            <h3 class="card-title">
-              {{ reportType === 'low_stock' ? 'Items Below Threshold' : 'Stock Overview' }}
-            </h3>
-            <span class="text-xs text-slate-400">
-              {{ (reportType === 'low_stock' ? lowStockRows : inventoryRows).length }} row(s)
-            </span>
-          </div>
-          <div class="overflow-x-auto max-h-96 overflow-y-auto">
-            <table class="table">
-              <thead class="sticky top-0">
-                <tr>
-                  <th>SKU</th><th>Product</th><th class="text-right">Stock</th>
-                  <th class="text-right">Value</th><th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="r in (reportType === 'low_stock' ? lowStockRows : inventoryRows)" :key="r.inventory_id">
-                  <td class="font-mono text-xs text-slate-500">{{ r.product.sku }}</td>
-                  <td class="font-medium text-slate-800">{{ r.product.product_name }}</td>
-                  <td class="text-right font-semibold tabular-nums">{{ r.current_stock }}</td>
-                  <td class="text-right tabular-nums text-slate-600">
-                    {{ peso(r.current_stock * Number(r.product.unit_price || 0)) }}
-                  </td>
-                  <td><StatusBadge :status="r.stock_status" /></td>
-                </tr>
-                <tr v-if="!(reportType === 'low_stock' ? lowStockRows : inventoryRows).length">
-                  <td colspan="5" class="text-center py-10 text-slate-400">Nothing to show.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          </template>
         </div>
       </div>
-    </template>
+
+      <!-- report table -->
+      <div class="card lg:col-span-2 min-w-0">
+        <div class="card-header">
+          <h3 class="card-title">
+            {{ { low_stock: 'Items Below Threshold', shrinkage: 'Shrinkage Events', category: 'Category Valuation' }[reportType] || 'Stock Overview' }}
+          </h3>
+          <span class="text-xs text-slate-400">
+            {{ (reportType === 'shrinkage' ? shrinkRows : reportType === 'category' ? byCategory : tableRows).length }} row(s)
+          </span>
+        </div>
+        <div class="overflow-x-auto max-h-96 overflow-y-auto">
+          <!-- shrinkage table -->
+          <table v-if="reportType === 'shrinkage'" class="table">
+            <thead class="sticky top-0">
+              <tr><th>Date</th><th>Product</th><th>Type</th><th class="text-right">Units</th><th class="text-right">Loss</th><th>Reason</th></tr>
+            </thead>
+            <TableSkeleton v-if="loadingShrink" :columns="6" :rows="4" />
+            <tbody v-else>
+              <tr v-if="!shrinkRows.length"><td colspan="6" class="text-center py-10 text-slate-400">No damaged or missing stock recorded for these filters.</td></tr>
+              <tr v-for="r in shrinkRows" :key="r.movementId">
+                <td class="text-xs text-slate-500 whitespace-nowrap">{{ when(r.dateRecorded) }}</td>
+                <td><p class="font-medium text-slate-800">{{ r.productName }}</p><p class="font-mono text-[11px] text-slate-400">{{ r.sku }}</p></td>
+                <td><span :class="r.movementType === 'missing' ? 'badge-red' : 'badge-amber'">{{ r.movementType }}</span></td>
+                <td class="text-right tabular-nums">{{ r.quantity }}</td>
+                <td class="text-right tabular-nums font-semibold">{{ peso(r.shrinkageValue) }}</td>
+                <td class="text-xs text-slate-500 max-w-[14rem] truncate" :title="r.reason">{{ r.reason }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- category table -->
+          <table v-else-if="reportType === 'category'" class="table">
+            <thead class="sticky top-0">
+              <tr><th>Category</th><th class="text-right">Products</th><th class="text-right">Units</th><th class="text-right">Value</th></tr>
+            </thead>
+            <TableSkeleton v-if="loadingInventory" :columns="4" :rows="4" />
+            <tbody v-else>
+              <tr v-if="!byCategory.length"><td colspan="4" class="text-center py-10 text-slate-400">Nothing to show.</td></tr>
+              <tr v-for="c in [...byCategory].sort((a, b) => b.value - a.value)" :key="c.label">
+                <td class="font-medium text-slate-800">{{ c.label }}</td>
+                <td class="text-right tabular-nums">{{ c.items }}</td>
+                <td class="text-right tabular-nums">{{ num(c.units) }}</td>
+                <td class="text-right tabular-nums font-semibold">{{ peso(c.value) }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- stock overview / low stock -->
+          <table v-else class="table">
+            <thead class="sticky top-0">
+              <tr><th>SKU</th><th>Product</th><th class="text-right">Stock</th><th class="text-right">Value</th><th>Status</th></tr>
+            </thead>
+            <TableSkeleton v-if="loadingInventory" :columns="5" :rows="5" />
+            <tbody v-else>
+              <tr v-if="inventoryError"><td colspan="5" class="text-center py-10 text-red-600">{{ inventoryError }}</td></tr>
+              <tr v-else-if="!tableRows.length">
+                <td colspan="5" class="text-center py-10 text-slate-400">
+                  {{ reportType === 'low_stock' ? 'Every product is above its reorder point.' : 'No products in this selection.' }}
+                </td>
+              </tr>
+              <tr v-for="r in tableRows" :key="r.inventoryId">
+                <td class="font-mono text-xs text-slate-500">{{ r.sku }}</td>
+                <td class="font-medium text-slate-800">{{ r.productName }}</td>
+                <td class="text-right font-semibold tabular-nums">{{ r.currentStock }}</td>
+                <td class="text-right tabular-nums text-slate-600">{{ peso(r.totalValue) }}</td>
+                <td><StatusBadge :status="r.stockStatus" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
