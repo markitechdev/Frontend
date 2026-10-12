@@ -118,10 +118,21 @@ const deleteModal = ref(false);
 const deleteTarget = ref(null);
 const deleting = ref(false);
 
-const availableRoles = computed(() => {
-  // Deactivated roles cannot be assigned (the API rejects them), so do not offer them.
-  return roles.value.filter((r) => (r.roleCode !== 'super_admin' || auth.isSuperAdmin) && r.isActive !== false);
-});
+/*
+ * Same rule as the API: "administrator" roles are Super Admin or any role that
+ * can manage accounts. Only a Super Admin may assign them, or change, reset or
+ * delete an account that holds one.
+ */
+const ADMIN_PERMS = ['users.manage', 'roles.manage', 'system.manage', 'security.manage'];
+const adminRoleIds = computed(() => new Set(roles.value
+  .filter((r) => r.roleCode === 'super_admin' || (r.permissions || []).some((p) => ADMIN_PERMS.includes(p.permission_code)))
+  .map((r) => r.roleId)));
+
+/** Can the signed-in user change / reset / delete this account? */
+const canManage = (u) => auth.isSuperAdmin || !adminRoleIds.value.has(u.role?.roleId);
+
+const availableRoles = computed(() => roles.value.filter((r) =>
+  r.isActive !== false && (auth.isSuperAdmin || !adminRoleIds.value.has(r.roleId))));
 
 const confirmDelete = (u) => {
   deleteTarget.value = u;
@@ -228,14 +239,17 @@ onMounted(async () => {
               <td class="text-slate-600 text-sm">{{ u.position || '—' }}</td>
               <td><span :class="u.isActive ? 'badge-green' : 'badge-gray'">{{ u.isActive ? 'Active' : 'Deactivated' }}</span></td>
               <td class="text-right whitespace-nowrap">
-                <template v-if="auth.can('users.manage')">
+                <template v-if="auth.can('users.manage') && (canManage(u) || isSelf(u))">
                   <button class="btn-ghost btn-sm mr-1" @click="openEdit(u)">Edit</button>
                   <button class="btn-ghost btn-sm mr-1" @click="openPassword(u)">Password</button>
-                  <button class="btn-ghost btn-sm mr-1" :disabled="rowBusy === u.userId || isSelf(u)" :title="isSelf(u) ? 'You cannot disable your own account' : ''" @click="toggleActive(u)">
-                    {{ rowBusy === u.userId ? '…' : (u.isActive ? 'Disable' : 'Enable') }}
-                  </button>
-                  <button v-if="!isSelf(u)" class="btn-ghost btn-sm text-red-600" @click="confirmDelete(u)">Delete</button>
+                  <template v-if="!isSelf(u)">
+                    <button class="btn-ghost btn-sm mr-1" :disabled="rowBusy === u.userId" @click="toggleActive(u)">
+                      {{ rowBusy === u.userId ? '…' : (u.isActive ? 'Disable' : 'Enable') }}
+                    </button>
+                    <button class="btn-ghost btn-sm text-red-600" @click="confirmDelete(u)">Delete</button>
+                  </template>
                 </template>
+                <span v-else-if="auth.can('users.manage')" class="text-xs text-slate-400" title="Only a Super Admin can change administrator accounts">Admin account</span>
                 <span v-else class="text-xs text-slate-400">View only</span>
               </td>
             </tr>
