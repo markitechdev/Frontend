@@ -26,13 +26,24 @@ const filters = reactive({
   categoryId: (route.query.categoryId || '').toString(),
 });
 
-const syncQuery = () => {
+/** Filters live in the URL so refresh, Back/Forward and shared links keep them. */
+// Discrete filter choices add a history entry (Back undoes them); typing in search replaces it.
+const syncQuery = (push = false) => {
   const query = {};
   if (filters.search) query.search = filters.search;
   if (filters.status) query.status = filters.status;
-  if (filters.categoryId) query.categoryId = filters.categoryId;
-  router.replace({ query });
+  if (filters.categoryId) query.categoryId = String(filters.categoryId);
+  const same = ['search', 'status', 'categoryId'].every((k) => (route.query[k] || '') === (query[k] || ''));
+  if (!same) (push ? router.push : router.replace)({ query });
 };
+
+// Back/Forward, or the top-bar search while already on this page
+watch(() => route.query, (q) => {
+  if (route.name !== 'inventory') return;
+  filters.search = (q.search || '').toString();
+  filters.status = (q.status || '').toString();
+  filters.categoryId = (q.categoryId || '').toString();
+});
 
 const clearFilters = () => {
   filters.search = '';
@@ -74,6 +85,7 @@ const openEdit = (row) => {
     supplierId: row.product.supplier?.supplier_id ?? '',
     unitPrice: Number(row.product.unit_price),
     expirationDate: row.product.expiration_date ?? '',
+    unitOfMeasure: row.product.unit_of_measure || 'pc',
     currentStock: row.current_stock,
     minimumStock: row.minimum_stock,
     reorderPoint: row.reorder_point,
@@ -83,8 +95,17 @@ const openEdit = (row) => {
 };
 
 const saveProduct = async () => {
-  saving.value = true;
+  if (saving.value) return;
   formErrors.value = [];
+  const problems = [];
+  if (!form.productName.trim()) problems.push('Product name is required.');
+  if (!form.sku.trim()) problems.push('SKU is required.');
+  if (Number(form.unitPrice) < 0) problems.push('Unit price cannot be negative.');
+  if (Number(form.reorderPoint) < Number(form.minimumStock)) {
+    problems.push('Reorder point must be greater than or equal to the minimum stock level.');
+  }
+  if (problems.length) { formErrors.value = problems; return; }
+  saving.value = true;
   try {
     const payload = {
       productName: form.productName,
@@ -126,11 +147,12 @@ const confirmDelete = (row) => {
 };
 
 const executeDelete = async () => {
-  if (!deleteTarget.value) return;
+  if (!deleteTarget.value || deleting.value) return;
   deleting.value = true;
   try {
-    await productsApi.remove(deleteTarget.value.product.product_id);
-    toast.success(`Product "${deleteTarget.value.product.product_name}" deleted.`);
+    const result = await productsApi.remove(deleteTarget.value.product.product_id);
+    if (result?.archived) toast.info(result.message);
+    else toast.success(`Product "${deleteTarget.value.product.product_name}" deleted.`);
     dashboardStore.invalidate();
     deleteModal.value = false;
     deleteTarget.value = null;
@@ -145,32 +167,72 @@ const executeDelete = async () => {
 /* ---------------------------------------------------------- stock movement */
 const moveModal = ref(false);
 const moveTarget = ref(null);
-const moveForm = reactive({ movementType: 'stock_in', quantity: 1, reason: '', referenceNo: '' });
+const moveForm = reactive({ movementType: 'stock_in', quantity: 1, direction: 'increase', countedQuantity: 0, reason: '', referenceNo: '' });
 const moveError = ref('');
 
 const openMovement = (row) => {
   moveTarget.value = row;
-  Object.assign(moveForm, { movementType: 'stock_in', quantity: 1, reason: '', referenceNo: '' });
+  Object.assign(moveForm, {
+    movementType: 'stock_in', quantity: 1, direction: 'increase',
+    countedQuantity: row.current_stock, reason: '', referenceNo: '',
+  });
   moveError.value = '';
   moveModal.value = true;
 };
 
+const projectedStock = computed(() => {
+  if (!moveTarget.value) return null;
+  const cur = moveTarget.value.current_stock;
+  const q = Number(moveForm.quantity) || 0;
+  switch (moveForm.movementType) {
+    case 'stock_in': case 'returned': return cur + q;
+    case 'stock_out': case 'damaged': case 'missing': return cur - q;
+    case 'adjustment': return moveForm.direction === 'decrease' ? cur - q : cur + q;
+    case 'count': return Number(moveForm.countedQuantity);
+    default: return cur;
+  }
+});
+
 const submitMovement = async () => {
-  if (!moveForm.quantity || Number(moveForm.quantity) <= 0) {
-    moveError.value = 'Quantity must be greater than zero.';
+  if (saving.value) return;
+  moveError.value = '';
+  const isCount = moveForm.movementType === 'count';
+
+  if (isCount) {
+    if (moveForm.countedQuantity === '' || Number(moveForm.countedQuantity) < 0 || !Number.isInteger(Number(moveForm.countedQuantity))) {
+      moveError.value = 'Enter the whole number of units physically counted (0 or more).';
+      return;
+    }
+  } else if (!Number.isInteger(Number(moveForm.quantity)) || Number(moveForm.quantity) <= 0) {
+    moveError.value = 'Quantity must be a whole number greater than zero.';
     return;
   }
+  if (projectedStock.value < 0) {
+    moveError.value = `Only ${moveTarget.value.current_stock} unit(s) on hand. This would make stock negative.`;
+    return;
+  }
+
   saving.value = true;
-  moveError.value = '';
   try {
-    await movementsApi.create({
-      productId: moveTarget.value.product.product_id,
-      movementType: moveForm.movementType,
-      quantity: Number(moveForm.quantity),
-      reason: moveForm.reason || null,
-      referenceNo: moveForm.referenceNo || null,
-    });
-    toast.success('Stock movement recorded in ledger.');
+    if (isCount) {
+      const res = await movementsApi.count({
+        productId: moveTarget.value.product.product_id,
+        countedQuantity: Number(moveForm.countedQuantity),
+        reason: moveForm.reason || null,
+        referenceNo: moveForm.referenceNo || null,
+      });
+      toast[res.variance === 0 ? 'success' : 'info'](res.message);
+    } else {
+      const qty = Number(moveForm.quantity);
+      await movementsApi.create({
+        productId: moveTarget.value.product.product_id,
+        movementType: moveForm.movementType,
+        quantity: moveForm.movementType === 'adjustment' && moveForm.direction === 'decrease' ? -qty : qty,
+        reason: moveForm.reason || null,
+        referenceNo: moveForm.referenceNo || null,
+      });
+      toast.success('Stock movement recorded in ledger.');
+    }
     dashboardStore.invalidate();
     moveModal.value = false;
     await load();
@@ -182,15 +244,22 @@ const submitMovement = async () => {
 };
 
 /* ------------------------------------------------------------------- load */
+const loadError = ref('');
+let requestSeq = 0;
 const load = async () => {
+  const seq = ++requestSeq;
   loading.value = true;
+  loadError.value = '';
   try {
     const res = await inventoryApi.list({
       search: filters.search, status: filters.status, categoryId: filters.categoryId,
     });
-    rows.value = res.data;
-  } catch (e) { toast.error(e.message); }
-  finally { loading.value = false; }
+    if (seq === requestSeq) rows.value = res.data; // ignore out-of-order responses
+  } catch (e) {
+    if (seq === requestSeq) loadError.value = e.message;
+  } finally {
+    if (seq === requestSeq) loading.value = false;
+  }
 };
 
 const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
@@ -209,15 +278,18 @@ const counts = computed(() => {
 });
 
 let t;
-watch(() => filters.search, () => { clearTimeout(t); t = setTimeout(load, 350); });
-watch(() => [filters.status, filters.categoryId], load);
+watch(() => filters.search, () => { clearTimeout(t); t = setTimeout(() => { syncQuery(); load(); }, 350); });
+watch(() => [filters.status, filters.categoryId], () => { syncQuery(true); load(); });
 
 onMounted(async () => {
   await load();
-  try {
-    categories.value = await categoriesApi.list();
-    if (auth.can('suppliers.view')) suppliers.value = await suppliersApi.list({ active: 'true' });
-  } catch { /* filters simply stay empty */ }
+  // Reference data loads in parallel; a failure only leaves the dropdowns empty.
+  const [cats, sups] = await Promise.allSettled([
+    categoriesApi.list(),
+    auth.can('suppliers.view') ? suppliersApi.list({ active: 'true' }) : Promise.resolve([]),
+  ]);
+  if (cats.status === 'fulfilled') categories.value = cats.value;
+  if (sups.status === 'fulfilled') suppliers.value = sups.value;
 });
 </script>
 
@@ -342,9 +414,19 @@ onMounted(async () => {
           </thead>
           <TableSkeleton v-if="loading" :columns="9" :rows="6" />
           <tbody v-else class="divide-y divide-slate-100">
-            <tr v-if="!rows.length">
+            <tr v-if="loadError">
+              <td colspan="9" class="text-center py-12">
+                <p class="text-sm text-rose-600 font-medium">{{ loadError }}</p>
+                <button class="btn-ghost btn-sm mt-2" @click="load">Try again</button>
+              </td>
+            </tr>
+            <tr v-else-if="!rows.length">
               <td colspan="9" class="text-center py-14 text-slate-400 font-medium">
-                No inventory records match the current filter criteria.
+                <template v-if="filters.search || filters.status || filters.categoryId">
+                  No inventory records match the current filters.
+                  <button class="btn-ghost btn-sm ml-1" @click="clearFilters">Clear filters</button>
+                </template>
+                <template v-else>No products yet{{ auth.can('products.create') ? ' — use “Add Product” to create the first one.' : '.' }}</template>
               </td>
             </tr>
             <tr v-else v-for="r in rows" :key="r.inventory_id" class="hover:bg-slate-50/80 transition-colors">
@@ -513,14 +595,34 @@ onMounted(async () => {
             <option value="returned">↩️ Returned — stock returned to shelf</option>
             <option value="damaged">⚠️ Damaged — written off goods</option>
             <option value="missing">🔍 Missing — inventory count discrepancy</option>
-            <option value="adjustment">🛠 Adjustment — operational count correction</option>
+            <option value="adjustment">🛠 Adjustment — manual correction (+ or −)</option>
+            <option value="count">📋 Physical count — enter what is on the shelf</option>
           </select>
         </div>
 
-        <div>
-          <label class="label">Quantity Units *</label>
-          <input v-model.number="moveForm.quantity" type="number" min="1" class="input font-bold" />
+        <div v-if="moveForm.movementType === 'count'">
+          <label class="label">Units physically counted *</label>
+          <input v-model.number="moveForm.countedQuantity" type="number" min="0" step="1" class="input font-bold" />
+          <p class="text-[11px] text-slate-500 mt-1">
+            System shows {{ moveTarget?.current_stock }}. A shortfall is recorded as <strong>missing</strong> (shrinkage); a surplus as an adjustment.
+          </p>
         </div>
+        <div v-else class="grid gap-3" :class="moveForm.movementType === 'adjustment' ? 'grid-cols-2' : 'grid-cols-1'">
+          <div v-if="moveForm.movementType === 'adjustment'">
+            <label class="label">Direction</label>
+            <select v-model="moveForm.direction" class="select">
+              <option value="increase">Increase stock (+)</option>
+              <option value="decrease">Decrease stock (−)</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Quantity Units *</label>
+            <input v-model.number="moveForm.quantity" type="number" min="1" step="1" class="input font-bold" />
+          </div>
+        </div>
+        <p v-if="projectedStock !== null" class="text-xs" :class="projectedStock < 0 ? 'text-rose-600 font-semibold' : 'text-slate-500'">
+          Stock after saving: <strong class="tabular-nums">{{ projectedStock }}</strong> (now {{ moveTarget?.current_stock }})
+        </p>
 
         <div>
           <label class="label">Reference / PO / Waybill No.</label>

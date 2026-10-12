@@ -14,17 +14,35 @@ const filters = reactive({ type: '', from: '', to: '' });
 const when = (d) => new Date(d).toLocaleString('en-PH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
 
+/** Local calendar dates -> exact instants, so "to" includes the whole selected day. */
+const range = () => ({
+  from: filters.from ? new Date(`${filters.from}T00:00:00`).toISOString() : undefined,
+  to: filters.to ? new Date(`${filters.to}T23:59:59.999`).toISOString() : undefined,
+});
+
+let requestSeq = 0;
 const load = async () => {
+  if (filters.from && filters.to && filters.from > filters.to) {
+    toast.error('"From" date must be on or before the "To" date.');
+    return;
+  }
+  const seq = ++requestSeq;
   loading.value = true;
   try {
     const [list, sum] = await Promise.all([
-      movementsApi.list({ type: filters.type, from: filters.from || undefined, to: filters.to || undefined, limit: 200 }),
-      movementsApi.summary({ from: filters.from || undefined, to: filters.to || undefined }),
+      movementsApi.list({ type: filters.type, ...range(), limit: 200 }),
+      movementsApi.summary(range()),
     ]);
+    if (seq !== requestSeq) return;
     rows.value = list.data;
     summary.value = sum;
-  } catch (e) { toast.error(e.message); }
-  finally { loading.value = false; }
+  } catch (e) { if (seq === requestSeq) toast.error(e.message); }
+  finally { if (seq === requestSeq) loading.value = false; }
+};
+
+const signedQty = (m) => {
+  if (m.movement_type === 'adjustment') return m.quantity < 0 ? `-${Math.abs(m.quantity)}` : `+${m.quantity}`;
+  return ['stock_out', 'damaged', 'missing'].includes(m.movement_type) ? `-${Math.abs(m.quantity)}` : `+${Math.abs(m.quantity)}`;
 };
 
 watch(() => [filters.type, filters.from, filters.to], load);
@@ -163,7 +181,7 @@ onMounted(load);
                 <StatusBadge :status="m.movement_type" />
               </td>
               <td class="text-right font-black tabular-nums text-sm text-slate-900">
-                {{ m.movement_type === 'stock_out' || m.movement_type === 'damaged' || m.movement_type === 'missing' ? '-' : '+' }}{{ Math.abs(m.quantity) }}
+                {{ signedQty(m) }}
               </td>
               <td class="font-mono text-xs text-slate-600">
                 {{ m.reference_no || '—' }}

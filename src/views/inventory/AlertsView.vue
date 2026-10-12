@@ -6,40 +6,48 @@ import { useToastStore } from '@/stores/toast';
 import StatCard from '@/components/ui/StatCard.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import ModalDialog from '@/components/ui/ModalDialog.vue';
+import { useDashboardStore } from '@/stores/dashboard';
 
 const auth = useAuthStore();
 const toast = useToastStore();
+const dashboardStore = useDashboardStore();
 
 const alerts = ref([]);
 const summary = ref(null);
 const loading = ref(true);
 const busy = ref(false);
 
-const filters = reactive({ status: 'active', type: '', priority: '', search: '' });
+// 'open' = active + acknowledged: acknowledging an alert no longer makes it disappear from the default view.
+const filters = reactive({ status: 'open', type: '', priority: '', search: '' });
 
 const detail = ref(null);
 const detailOpen = ref(false);
 
 const when = (d) => new Date(d).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
+let requestSeq = 0;
 const load = async () => {
+  const seq = ++requestSeq;
   loading.value = true;
   try {
     const [list, sum] = await Promise.all([
       alertsApi.list({ ...filters }),
       alertsApi.summary(),
     ]);
+    if (seq !== requestSeq) return; // a newer filter change already started
     alerts.value = list.data;
     summary.value = sum;
-  } catch (e) { toast.error(e.message); }
-  finally { loading.value = false; }
+  } catch (e) { if (seq === requestSeq) toast.error(e.message); }
+  finally { if (seq === requestSeq) loading.value = false; }
 };
 
 const setStatus = async (alert, status) => {
+  if (busy.value) return;
   busy.value = true;
   try {
     await alertsApi.setStatus(alert.alert_id, status);
     toast.success(status === 'resolved' ? 'Alert resolved.' : 'Alert acknowledged.');
+    dashboardStore.invalidate();
     detailOpen.value = false;
     await load();
   } catch (e) { toast.error(e.message); }
@@ -112,6 +120,7 @@ onMounted(load);
       <input v-model="filters.search" class="input flex-1 min-w-[200px]" placeholder="Search alerts…" />
 
       <select v-model="filters.status" class="select w-auto min-w-[140px]">
+        <option value="open">Open (active + acknowledged)</option>
         <option value="active">Active</option>
         <option value="acknowledged">Acknowledged</option>
         <option value="resolved">Resolved</option>

@@ -22,6 +22,14 @@ const num  = (n) => (n === null || n === undefined || n === '') ? '--' : Number(
 const when = (d) => new Date(d).toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 const cards   = computed(() => data.value?.cards ?? {});
+// Each role only receives the cards its permissions allow; show the matching layout.
+const hasInventory = computed(() => cards.value.totalProducts !== undefined);
+
+/** Signed quantity: outflows negative, adjustments keep their own sign. */
+const signedQty = (m) => {
+  if (m.movement_type === 'adjustment') return m.quantity < 0 ? `-${Math.abs(m.quantity)}` : `+${m.quantity}`;
+  return ['stock_out', 'damaged', 'missing'].includes(m.movement_type) ? `-${Math.abs(m.quantity)}` : `+${Math.abs(m.quantity)}`;
+};
 const panels  = computed(() => data.value?.panels ?? {});
 
 const greetingTime = computed(() => {
@@ -41,6 +49,7 @@ const getRoleDisplay = (code, name) => {
   else if (c.includes('purchas')) icon = '🛒';
   else if (c.includes('analyst')) icon = '📊';
   else if (c.includes('audit')) icon = '🔍';
+  else if (c.includes('finance')) icon = '💰';
   else if (c === 'staff' || c === 'user') icon = '👤';
   else if (c) icon = '🧩';
   return { icon, text: name || (code ? code.toUpperCase() : 'Staff') };
@@ -82,9 +91,9 @@ onMounted(() => load(false));
       <div>
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold tracking-widest text-sky-600 uppercase">
-            Warehouse Operations Command
+            {{ hasInventory ? 'Warehouse Operations' : 'Workspace Overview' }}
           </span>
-          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <span v-if="hasInventory" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Live Inventory
           </span>
@@ -93,7 +102,7 @@ onMounted(() => load(false));
           {{ greetingTime }}, <span class="text-slate-900">{{ auth.user?.fullName }}</span>.
         </h1>
         <p class="text-xs sm:text-sm font-medium text-slate-500 mt-0.5">
-          Warehouse operations are ready. You are signed in as
+          You are signed in as
           <span class="font-bold text-slate-700">{{ roleInfo.icon }} {{ roleInfo.text }}</span> in <span class="font-bold text-slate-700">{{ auth.tenantName }}</span>.
         </p>
       </div>
@@ -172,7 +181,22 @@ onMounted(() => load(false));
     <!-- Loaded Real Operational Dashboard -->
     <template v-else>
       <!-- Varied Operational KPI Cards Hierarchy -->
-      <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- Account-focused roles (e.g. Staff Admin) do not receive inventory figures -->
+      <div v-if="!hasInventory" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        <div v-if="cards.totalUsers !== undefined" class="card p-4 border-l-4 border-l-sky-500">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Accounts</span>
+          <p class="text-2xl font-black text-slate-900 tracking-tight mt-2">{{ num(cards.totalUsers) }}</p>
+          <p class="text-[11px] text-slate-500 font-medium mt-0.5">Users who can currently sign in</p>
+        </div>
+        <div v-if="cards.activeSuppliers !== undefined" class="card p-4 border-l-4 border-l-slate-700">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Suppliers</span>
+          <p class="text-2xl font-black text-slate-900 tracking-tight mt-2">{{ num(cards.activeSuppliers) }}</p>
+        </div>
+        <div v-if="cards.totalUsers === undefined && cards.activeSuppliers === undefined" class="card p-5 sm:col-span-2 lg:col-span-4 text-sm text-slate-500">
+          Your role has no dashboard figures yet. Use the sidebar to open the modules you have access to.
+        </div>
+      </div>
+      <div v-else class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <!-- 1. Catalog Products Volume (Primary Card) -->
         <div class="card p-4 border-l-4 border-l-sky-500 flex flex-col justify-between">
           <div class="flex items-center justify-between">
@@ -391,7 +415,7 @@ onMounted(() => load(false));
                   </td>
                   <td><StatusBadge :status="m.movement_type" /></td>
                   <td class="text-right font-black tabular-nums text-slate-900">
-                    {{ m.movement_type === 'stock_out' || m.movement_type === 'damaged' || m.movement_type === 'missing' ? '-' : '+' }}{{ Math.abs(m.quantity) }}
+                    {{ signedQty(m) }}
                   </td>
                   <td class="text-xs text-slate-600 font-medium">{{ m.recorded_by_user?.full_name || 'System' }}</td>
                 </tr>
