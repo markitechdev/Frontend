@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from 'vue';
 import { logsApi } from '@/api';
+import { actionLabel, entityLabel, detailsSummary } from '@/utils/auditLabels';
 
 const rows = ref([]);
 const loading = ref(true);
@@ -43,7 +44,8 @@ onMounted(load);
     <div class="card p-4 flex flex-wrap items-center gap-3">
       <select v-model="filters.entityType" class="select w-auto min-w-[170px]">
         <option value="">All areas</option>
-        <option value="auth">Authentication</option>
+        <option value="auth">Sign-ins</option>
+        <option value="reports">Reports</option>
         <option value="products">Products</option>
         <option value="inventory">Inventory</option>
         <option value="stock_movements">Stock Movements</option>
@@ -79,10 +81,10 @@ onMounted(load);
               <td class="text-xs text-slate-500 whitespace-nowrap">{{ when(log.createdAt) }}</td>
               <td class="text-sm font-medium text-slate-700">{{ log.actor?.fullName || 'System' }}</td>
               <td class="text-xs text-slate-500">{{ log.actor?.icon }} {{ log.actor?.roleName || '—' }}</td>
-              <td><span class="badge-gray">{{ log.action.replace(/_/g, ' ') }}</span></td>
-              <td class="text-sm text-slate-600">{{ log.entityType || '—' }}</td>
-              <td class="text-xs font-mono text-slate-400 max-w-xs truncate">
-                {{ log.details ? JSON.stringify(log.details) : '—' }}
+              <td><span class="badge-gray whitespace-nowrap" :title="log.action">{{ actionLabel(log.action) }}</span></td>
+              <td class="text-sm text-slate-600">{{ log.entityType ? entityLabel(log.entityType) : '—' }}</td>
+              <td class="text-xs text-slate-500 max-w-xs truncate" :title="detailsSummary(log.details)">
+                {{ detailsSummary(log.details) || '—' }}
               </td>
             </tr>
           </tbody>
