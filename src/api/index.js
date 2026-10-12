@@ -1,6 +1,9 @@
 import api, { unwrap, unwrapWithMeta } from './client.js';
 import { cached, invalidate } from './cache.js';
 
+/** Clears cached reference data after a write to that resource. */
+const mutate = (prefix) => (res) => { invalidate(prefix); return res; };
+
 const qs = (params = {}) => {
   const clean = Object.fromEntries(
     Object.entries(params).filter(([, v]) => v !== '' && v !== null && v !== undefined));
@@ -31,10 +34,10 @@ export const superAdminApi = {
     permissions: () => api.get('/super-admin/roles/permissions').then(unwrap),
     get:         (id) => api.get(`/super-admin/roles/${id}`).then(unwrap),
     getUsers:    (id) => api.get(`/super-admin/roles/${id}/users`).then(unwrap),
-    create:      (body) => api.post('/super-admin/roles', body).then(unwrap),
-    update:      (id, body) => api.patch(`/super-admin/roles/${id}`, body).then(unwrap),
-    setPermissions: (id, permissionIds) => api.put(`/super-admin/roles/${id}/permissions`, { permissionIds }).then(unwrap),
-    remove:      (id) => api.delete(`/super-admin/roles/${id}`).then(unwrap),
+    create:      (body) => api.post('/super-admin/roles', body).then(unwrap).then(mutate('roles')),
+    update:      (id, body) => api.patch(`/super-admin/roles/${id}`, body).then(unwrap).then(mutate('roles')),
+    setPermissions: (id, permissionIds) => api.put(`/super-admin/roles/${id}/permissions`, { permissionIds }).then(unwrap).then(mutate('roles')),
+    remove:      (id) => api.delete(`/super-admin/roles/${id}`).then(unwrap).then(mutate('roles')),
   },
   logs: {
     list: (params) => api.get('/super-admin/logs', qs(params)).then(unwrapWithMeta),
@@ -81,11 +84,9 @@ export const alertsApi = {
   setStatus: (id, status, note) => api.patch(`/alerts/${id}`, { status, note }).then(unwrap),
 };
 
-const mutate = (prefix) => (res) => { invalidate(prefix); return res; };
-
 export const suppliersApi = {
   list:   (params = {}) => {
-    const run = () => api.get('/suppliers', qs(params)).then(unwrap);
+    const run = () => api.get('/suppliers', { ...qs(params), skipForbiddenRedirect: params.active === 'true' && !params.search }).then(unwrap);
     // Only the plain "active suppliers" dropdown list is cached; searches always hit the server.
     return !params.search && params.active === 'true' ? cached('suppliers:active', run) : run();
   },
@@ -96,7 +97,8 @@ export const suppliersApi = {
 };
 
 export const categoriesApi = {
-  list:   () => cached('categories', () => api.get('/categories').then(unwrap)),
+  // Secondary data for dropdowns: a 403 just leaves the dropdown empty instead of leaving the page
+  list:   () => cached('categories', () => api.get('/categories', { skipForbiddenRedirect: true }).then(unwrap)),
   create: (body) => api.post('/categories', body).then(unwrap).then(mutate('categories')),
   update: (id, body) => api.patch(`/categories/${id}`, body).then(unwrap).then(mutate('categories')),
   remove: (id) => api.delete(`/categories/${id}`).then(mutate('categories')),

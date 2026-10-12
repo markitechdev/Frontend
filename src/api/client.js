@@ -1,7 +1,13 @@
 import axios from 'axios';
 import { getSession, setSession } from './session.js';
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
+// Production builds must be given VITE_API_BASE_URL (e.g. https://your-api.vercel.app/api).
+// The localhost fallback only exists in development so it can never ship by accident.
+const configuredBase = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+if (!configuredBase && !import.meta.env.DEV) {
+  console.error('[config] VITE_API_BASE_URL is not set for this build; API calls will go to /api on this site.');
+}
+const baseURL = configuredBase || (import.meta.env.DEV ? 'http://localhost:4000/api' : '/api');
 
 const api = axios.create({
   baseURL,
