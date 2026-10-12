@@ -1,4 +1,5 @@
 ﻿<script setup>
+import { safeRedirect } from '@/utils/permissions';
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -16,7 +17,7 @@ const errors = reactive({ email: '', password: '' });
 
 // Demo credentials guarded exclusively for development environment
 const isDev = Boolean(import.meta.env.DEV);
-const DEMO = isDev ? [
+const DEMO = import.meta.env.DEV ? [
   { role: 'Warehouse Admin', email: 'warehouse@ims.local',  password: 'Warehouse123!'  },
   { role: 'Staff Admin',     email: 'staff@ims.local',      password: 'StaffAdmin123!' },
   { role: 'Finance Admin',   email: 'finance@ims.local',    password: 'Finance123!'    },
@@ -32,7 +33,7 @@ const useDemo = (d) => {
 // Redirect already authenticated users away from the login view
 onMounted(() => {
   if (auth.isAuthenticated) {
-    const target = typeof route.query.redirect === 'string' ? route.query.redirect : '/dashboard';
+    const target = safeRedirect(route.query.redirect, '/dashboard');
     router.replace(target);
   }
 });
@@ -69,7 +70,7 @@ const submit = async () => {
   submitting.value = true;
   try {
     await auth.login(email.value.trim(), password.value);
-    const target = typeof route.query.redirect === 'string' ? route.query.redirect : '/dashboard';
+    const target = safeRedirect(route.query.redirect, '/dashboard');
     router.replace(target);
   } catch {
     // auth.error is displayed in the alert banner
@@ -155,6 +156,17 @@ const submit = async () => {
           <p class="text-sm text-slate-500 mt-1.5">
             Enter your authorized system credentials to access your organization workspace.
           </p>
+        </div>
+
+        <!-- Session expired / signed out elsewhere -->
+        <div
+          v-if="route.query.expired === 'true' && !auth.error"
+          class="mb-5 flex items-start gap-2.5 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="text-amber-500 font-bold shrink-0" aria-hidden="true">⚠</span>
+          <p class="leading-snug">Your session has expired. Please sign in again to continue where you left off.</p>
         </div>
 
         <form class="space-y-5" @submit.prevent="submit" novalidate>

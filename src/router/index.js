@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { safeRedirect } from '@/utils/permissions';
 
 /**
  * Route metadata specifications:
@@ -105,6 +106,8 @@ const routes = [
     name: 'product-detail',
     component: () => import('@/views/inventory/ProductDetailView.vue'),
     meta: { title: 'Product Details', permission: 'products.view' },
+    // Non-numeric ids go straight to the 404 page instead of a failed API call
+    beforeEnter: (to) => (/^\d+$/.test(String(to.params.id)) ? true : { name: 'not-found', params: { pathMatch: to.path.slice(1).split('/') } }),
   },
 
   {
@@ -145,7 +148,7 @@ const routes = [
     path: '/roles',
     name: 'roles',
     component: () => import('@/views/admin/RolesView.vue'),
-    meta: { title: 'Roles & Permissions', permission: 'roles.manage' },
+    meta: { title: 'Roles & Permissions', anyOf: ['roles.view', 'roles.manage'] },
   },
   {
     path: '/activity',
@@ -172,29 +175,42 @@ const routes = [
     path: '/forbidden',
     name: 'forbidden',
     component: () => import('@/views/ForbiddenView.vue'),
-    meta: { title: 'Access Denied' },
+    meta: { title: 'Access Denied', layout: 'auto' },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/views/NotFoundView.vue'),
-    meta: { title: 'Page Not Found' },
+    meta: { title: 'Page Not Found', public: true, layout: 'auto' },
   },
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-  scrollBehavior: () => ({ top: 0 }),
+  // Restore scroll on Back/Forward; keep position when only the query (filters) changes.
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) return savedPosition;
+    if (to.path === from.path) return false;
+    return { top: 0 };
+  },
 });
 
 /**
  * Super Admin Protected Route Guard
  * Authoritatively separates Platform Super Admin routes from Tenant/User routes
  */
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore();
   const isSuperAdminRoute = Boolean(to.meta.superAdmin || to.path.startsWith('/super-admin'));
+
+  // Verify the stored session/permissions with the server once per page load,
+  // so guards below never decide on stale or tampered localStorage data.
+  let sessionEnded = false;
+  if (auth.token && !auth.verified) {
+    await auth.ensureVerified();
+    sessionEnded = !auth.token; // the stored session was rejected by the server
+  }
 
   // 1. Handling Public Routes
   if (to.meta.public) {
@@ -202,13 +218,15 @@ router.beforeEach((to) => {
       if (auth.isSuperAdmin) {
         return { name: 'super-admin-dashboard', replace: true };
       }
-      return { name: 'dashboard', replace: true };
+      return { path: safeRedirect(to.query.redirect, '/dashboard'), replace: true };
     }
     if (to.name === 'super-admin-login' && auth.isAuthenticated && auth.isSuperAdmin) {
-      return { name: 'super-admin-dashboard', replace: true };
+      return { path: safeRedirect(to.query.redirect, '/super-admin/dashboard'), replace: true };
     }
     return true;
   }
+
+  const loginQuery = sessionEnded ? { redirect: to.fullPath, expired: 'true' } : { redirect: to.fullPath };
 
   // 2. Strict Super Admin Protection Guard
   if (isSuperAdminRoute) {
@@ -216,14 +234,14 @@ router.beforeEach((to) => {
     if (!auth.isAuthenticated) {
       return {
         name: 'super-admin-login',
-        query: { redirect: to.fullPath },
+        query: loginQuery,
         replace: true,
       };
     }
 
     // Authenticated normal user (Admin, Manager, Staff) attempting Super Admin route -> Access Denied
     if (!auth.isSuperAdmin) {
-      return { name: 'forbidden', replace: true };
+      return { name: 'forbidden', query: { from: to.fullPath }, replace: true };
     }
 
     // Authenticated Super Admin allowed
@@ -232,7 +250,7 @@ router.beforeEach((to) => {
 
   // 3. Normal Authenticated Routes Guard
   if (!auth.isAuthenticated) {
-    return { name: 'login', query: { redirect: to.fullPath }, replace: true };
+    return { name: 'login', query: loginQuery, replace: true };
   }
 
   // Super Admin possessing global administrative clearance across all routes
@@ -242,13 +260,20 @@ router.beforeEach((to) => {
 
   // Enforce granular route permissions via replace: true to prevent history trapping
   if (to.meta.permission && !auth.can(to.meta.permission)) {
-    return { name: 'forbidden', replace: true };
+    return { name: 'forbidden', query: { from: to.fullPath }, replace: true };
   }
   if (to.meta.anyOf && !auth.canAny(...to.meta.anyOf)) {
-    return { name: 'forbidden', replace: true };
+    return { name: 'forbidden', query: { from: to.fullPath }, replace: true };
   }
 
   return true;
+});
+
+// A new deployment can invalidate lazily-loaded chunks; reload instead of showing a blank page.
+router.onError((err, to) => {
+  if (/Failed to fetch dynamically imported module|Importing a module script failed/i.test(err?.message || '')) {
+    window.location.assign(to.fullPath);
+  }
 });
 
 router.afterEach((to) => {

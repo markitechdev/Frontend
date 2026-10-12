@@ -1,4 +1,5 @@
 <script setup>
+import { safeRedirect } from '@/utils/permissions';
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -16,13 +17,15 @@ const errors = reactive({ email: '', password: '' });
 
 // Dev environment demo account for Super Admin testing
 const isDev = Boolean(import.meta.env.DEV);
-const SUPER_ADMIN_DEMO = {
+// Defined only in development builds so the password never ships in the production bundle.
+const SUPER_ADMIN_DEMO = import.meta.env.DEV ? {
   role: 'Platform Super Admin',
   email: 'superadmin@ims.local',
   password: 'SuperAdmin123!',
-};
+} : null;
 
 const useSuperAdminDemo = () => {
+  if (!SUPER_ADMIN_DEMO) return;
   email.value = SUPER_ADMIN_DEMO.email;
   password.value = SUPER_ADMIN_DEMO.password;
   errors.email = '';
@@ -31,7 +34,7 @@ const useSuperAdminDemo = () => {
 
 onMounted(() => {
   if (auth.isAuthenticated && auth.isSuperAdmin) {
-    const target = typeof route.query.redirect === 'string' ? route.query.redirect : '/super-admin/dashboard';
+    const target = safeRedirect(route.query.redirect, '/super-admin/dashboard');
     router.replace(target);
   }
 });
@@ -73,7 +76,7 @@ const submit = async () => {
     } else {
       await auth.login(email.value.trim(), password.value);
     }
-    const target = typeof route.query.redirect === 'string' ? route.query.redirect : '/super-admin/dashboard';
+    const target = safeRedirect(route.query.redirect, '/super-admin/dashboard');
     router.replace(target);
   } catch (err) {
     // Error is set in auth store with safe generic message
@@ -271,7 +274,7 @@ const submit = async () => {
         </form>
 
         <!-- Development Quick-Fill -->
-        <div v-if="isDev" class="mt-8 pt-6 border-t border-slate-200">
+        <div v-if="isDev && SUPER_ADMIN_DEMO" class="mt-8 pt-6 border-t border-slate-200">
           <div class="flex items-center justify-between mb-3">
             <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
               Dev Super Admin Credentials

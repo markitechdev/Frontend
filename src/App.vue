@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import AppLayout from '@/components/layout/AppLayout.vue';
 import SuperAdminLayout from '@/components/layout/SuperAdminLayout.vue';
@@ -10,17 +10,18 @@ const route = useRoute();
 const auth = useAuthStore();
 
 const layoutComponent = computed(() => {
+  // Before the first navigation resolves, render nothing around the page (no sidebar flash on /login).
+  if (!route.matched.length) return 'div';
   if (route.meta.layout === 'blank') return 'div';
+  // 404 / Access Denied: full shell when signed in, plain page when signed out.
+  if (route.meta.layout === 'auto') {
+    if (!auth.isAuthenticated) return 'div';
+    return auth.isSuperAdmin && route.query.from?.toString().startsWith('/super-admin') ? SuperAdminLayout : AppLayout;
+  }
   if (route.meta.layout === 'super-admin') return SuperAdminLayout;
   return AppLayout;
 });
-
-// Pull the latest role/permissions on load so changes apply without a re-login.
-onMounted(() => {
-  if (auth.isAuthenticated) {
-    auth.refreshProfile();
-  }
-});
+// Profile/permission verification happens once in the router guard (auth.ensureVerified).
 </script>
 
 <template>
