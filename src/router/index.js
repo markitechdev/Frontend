@@ -36,7 +36,7 @@ const routes = [
     meta: {
       superAdmin: true,
       layout: 'super-admin',
-      title: 'Platform Administration Dashboard',
+      title: 'Administration Dashboard',
     },
   },
   {
@@ -46,7 +46,7 @@ const routes = [
     meta: {
       superAdmin: true,
       layout: 'super-admin',
-      title: 'Platform Users',
+      title: 'User Accounts',
     },
   },
   {
@@ -56,7 +56,7 @@ const routes = [
     meta: {
       superAdmin: true,
       layout: 'super-admin',
-      title: 'Platform Roles & Permissions',
+      title: 'Roles & Permissions',
     },
   },
   {
@@ -66,7 +66,7 @@ const routes = [
     meta: {
       superAdmin: true,
       layout: 'super-admin',
-      title: 'Client Tenants & Workspaces',
+      title: 'Organization',
     },
   },
   {
@@ -76,7 +76,7 @@ const routes = [
     meta: {
       superAdmin: true,
       layout: 'super-admin',
-      title: 'System Audit Logs',
+      title: 'Audit Logs',
     },
   },
 

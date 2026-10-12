@@ -14,42 +14,41 @@ const router = useRouter();
 
 const SECTIONS = [
   {
-    heading: 'Platform Telemetry',
+    heading: 'Overview',
     items: [
       {
         to: '/super-admin/dashboard',
-        label: 'Platform Overview',
+        label: 'Dashboard',
         icon: '▦',
-        badge: 'Live',
       },
     ],
   },
   {
-    heading: 'Platform Governance',
+    heading: 'Administration',
     items: [
       {
         to: '/super-admin/users',
-        label: 'Platform Users',
+        label: 'User Accounts',
         icon: '👥',
       },
       {
         to: '/super-admin/roles',
-        label: 'Roles & Matrix',
+        label: 'Roles & Permissions',
         icon: '🛡️',
       },
     ],
   },
   {
-    heading: 'Multi-Tenancy & Security',
+    heading: 'Organization & Security',
     items: [
       {
         to: '/super-admin/tenants',
-        label: 'Client Tenants',
+        label: 'Organization',
         icon: '🏢',
       },
       {
         to: '/super-admin/logs',
-        label: 'Platform Audit Logs',
+        label: 'Audit Logs',
         icon: '📜',
       },
     ],
@@ -107,7 +106,7 @@ onBeforeUnmount(() => {
     >
       <div
         v-if="mobileOpen"
-        class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-xs lg:hidden"
+        class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm lg:hidden"
         @click="emit('close')"
         aria-hidden="true"
       />
@@ -116,34 +115,34 @@ onBeforeUnmount(() => {
     <!-- Super Admin Dedicated Sidebar -->
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-50 w-68 flex flex-col transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 shadow-2xl lg:shadow-none',
+        'fixed lg:sticky top-0 left-0 z-50 h-screen w-64 shrink-0 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 shadow-2xl lg:shadow-none',
         mobileOpen ? 'translate-x-0' : '-translate-x-0 max-lg:-translate-x-full',
       ]"
       style="background-color: #0F1B2D;"
-      aria-label="Super Admin Platform Navigation"
+      aria-label="Administration navigation"
     >
       <!-- Brand & Platform Banner -->
       <div class="flex items-center justify-between h-16 px-5 border-b border-slate-800/80 shrink-0">
         <RouterLink
           to="/super-admin/dashboard"
-          class="flex items-center gap-3 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 rounded-lg p-1"
+          class="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1"
         >
-          <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-950 font-bold text-xs tracking-wider">
-            SA
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-950" aria-hidden="true">
+            <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" /><path d="m3 8 9 5 9-5" /><path d="M12 13v8" /></svg>
           </div>
           <div class="flex flex-col">
             <span class="text-sm font-bold tracking-tight text-white leading-tight">
-              IMS PLATFORM
+              IMS Administration
             </span>
             <span class="text-[10px] font-semibold tracking-wider text-indigo-400 uppercase">
-              Root Administration
+              Super Admin
             </span>
           </div>
         </RouterLink>
 
         <button
           type="button"
-          class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+          class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
           @click="emit('close')"
           aria-label="Close navigation sidebar"
         >
@@ -168,7 +167,7 @@ onBeforeUnmount(() => {
                 :class="[
                   'group flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150',
                   isItemActive(item.to)
-                    ? 'bg-indigo-600 text-white shadow-xs font-semibold'
+                    ? 'bg-indigo-600 text-white shadow-sm font-semibold'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800/70'
                 ]"
               >
@@ -205,13 +204,13 @@ onBeforeUnmount(() => {
               <span class="inline-flex items-center px-1.5 py-0.2 text-[9px] font-bold tracking-wide uppercase bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30">
                 Super Admin
               </span>
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Authoritative session active" />
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Signed in" />
             </div>
           </div>
           <button
             type="button"
             @click="onLogout"
-            class="p-1.5 rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 transition shrink-0 focus:outline-hidden focus:ring-2 focus:ring-rose-500"
+            class="p-1.5 rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 transition shrink-0 focus:outline-none focus:ring-2 focus:ring-rose-500"
             title="Sign out of Super Admin"
             aria-label="Sign out of Super Admin"
           >

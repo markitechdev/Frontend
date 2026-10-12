@@ -12,7 +12,7 @@ const route = useRoute();
 const menuOpen = ref(false);
 const menuRef = ref(null);
 
-const title = computed(() => route.meta?.title || 'Platform Overview');
+const title = computed(() => route.meta?.title || 'Dashboard');
 
 const initials = computed(() => {
   const name = auth.user?.fullName || auth.user?.name || 'Super Admin';
@@ -56,13 +56,13 @@ onBeforeUnmount(() => {
 
 <template>
   <header
-    class="sticky top-0 z-30 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 shadow-xs"
+    class="sticky top-0 z-30 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-3 sm:px-6 shadow-sm"
   >
     <!-- Left: Mobile menu button & breadcrumbs -->
     <div class="flex items-center gap-2 sm:gap-3 min-w-0">
       <button
         type="button"
-        class="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+        class="lg:hidden p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
         @click="emit('toggle-sidebar')"
         aria-label="Toggle navigation drawer"
       >
@@ -74,7 +74,7 @@ onBeforeUnmount(() => {
       <div class="flex items-center gap-2 truncate">
         <span class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-md border border-indigo-200 dark:border-indigo-800/60">
           <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400" />
-          Platform Admin
+          Administration
         </span>
         <span class="hidden sm:inline text-slate-300 dark:text-slate-600">/</span>
         <h1 class="text-sm sm:text-base lg:text-lg font-semibold text-slate-900 dark:text-white truncate">
@@ -83,24 +83,20 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- Right: Telemetry pill & user profile dropdown -->
+    <!-- Right: user profile dropdown -->
     <div class="flex items-center gap-2 sm:gap-3">
       <!-- Session clearance badge -->
-      <div class="hidden md:flex items-center gap-2 px-3 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400 dark:border-emerald-800">
-        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-        <span>Root Authorization Active</span>
-      </div>
 
       <!-- Super Admin Profile Dropdown -->
       <div class="relative" ref="menuRef">
         <button
           type="button"
-          class="flex items-center gap-2 sm:gap-2.5 p-1.5 min-h-[44px] rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+          class="flex items-center gap-2 sm:gap-2.5 p-1.5 min-h-[44px] rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition focus:outline-none focus:ring-2 focus:ring-indigo-500"
           @click="menuOpen = !menuOpen"
           :aria-expanded="menuOpen"
           aria-haspopup="true"
         >
-          <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+          <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">
             {{ initials }}
           </div>
           <div class="hidden sm:flex flex-col text-left">
@@ -108,7 +104,7 @@ onBeforeUnmount(() => {
               {{ auth.user?.fullName || auth.user?.name || 'Super Admin' }}
             </span>
             <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-              Platform Admin
+              Super Admin
             </span>
           </div>
           <svg
@@ -140,9 +136,6 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="px-2 py-1.5">
-            <div class="px-2 py-1 text-[11px] text-slate-400 dark:text-slate-500">
-              Scope: Platform & Tenant Root
-            </div>
             <button
               type="button"
               class="w-full mt-1 flex items-center gap-2 px-3 py-2 rounded-lg text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 font-medium transition text-left"
@@ -152,7 +145,7 @@ onBeforeUnmount(() => {
               <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              <span>Sign Out of Platform</span>
+              <span>Sign out</span>
             </button>
           </div>
         </div>
