@@ -22,8 +22,9 @@ const selectedLog = ref(null);
 const actionOptions = [
   { value: 'ALL', label: 'All Actions' },
   { value: 'SUPER_ADMIN_LOGIN', label: '🛡️ SUPER_ADMIN_LOGIN' },
-  { value: 'LOGIN', label: '🔑 LOGIN' },
-  { value: 'LOGOUT', label: '🚪 LOGOUT' },
+  { value: 'login', label: '🔑 LOGIN' },
+  { value: 'logout', label: '🚪 LOGOUT' },
+  { value: 'super_admin_login_denied', label: '🚫 SUPER_ADMIN_LOGIN_DENIED' },
   { value: 'USER_CREATED', label: '👤 USER_CREATED' },
   { value: 'USER_UPDATED', label: '✏️ USER_UPDATED' },
   { value: 'USER_ROLE_CHANGED', label: '🔄 USER_ROLE_CHANGED' },
@@ -34,7 +35,8 @@ const actionOptions = [
   { value: 'ROLE_DELETED', label: '🗑️ ROLE_DELETED' },
   { value: 'ROLE_ASSIGNED', label: '📌 ROLE_ASSIGNED' },
   { value: 'PERMISSION_ADDED', label: '➕ PERMISSION_ADDED' },
-  { value: 'PERMISSION_REMOVED', label: '➖ PERMISSION_REMOVED' },
+  { value: 'USER_PASSWORD_RESET', label: '🔐 USER_PASSWORD_RESET' },
+  { value: 'USER_DELETED', label: '🗑️ USER_DELETED' },
 ];
 
 const entityOptions = [

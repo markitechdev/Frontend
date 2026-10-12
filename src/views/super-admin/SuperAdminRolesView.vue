@@ -212,8 +212,10 @@ const submitEditRole = async () => {
   try {
     const roleId = activeRole.value.roleId || activeRole.value.role_id;
     // 1. Update metadata (name, icon, description, isActive)
+    const isRoot = activeRole.value.roleCode === 'super_admin';
     await superAdminApi.roles.update(roleId, {
-      roleName: editForm.roleName.trim(),
+      // The Super Admin role's name is protected; sending it makes the API refuse the whole save
+      ...(isRoot ? {} : { roleName: editForm.roleName.trim() }),
       icon: editForm.icon,
       description: editForm.description.trim(),
       isActive: editForm.isActive,
@@ -265,8 +267,9 @@ const confirmDeleteRole = (role) => {
     toast.error('System roles are protected and cannot be deleted.');
     return;
   }
-  if (role.userCount > 0) {
-    toast.error(`Cannot delete role while ${role.userCount} account(s) are assigned to it. Reassign users first.`);
+  const assigned = role.totalUserCount ?? role.userCount ?? 0;
+  if (assigned > 0) {
+    toast.error(`Cannot delete role while ${assigned} account(s) (including deactivated ones) are assigned to it. Reassign users first.`);
     return;
   }
   roleToDelete.value = role;

@@ -45,8 +45,8 @@ const cards = computed(() => {
     totalQuantity: c.totalQuantity ?? inv.totalStockUnits,
     lowStock: c.lowStock ?? inv.lowStockCount,
     outOfStock: c.outOfStock ?? inv.outOfStockCount,
-    reorderDue: c.reorderDue ?? inv.lowStockCount,
-    activeSuppliers: c.activeSuppliers,
+    reorderDue: c.reorderDue ?? inv.reorderDueCount,
+    activeSuppliers: c.activeSuppliers ?? inv.activeSuppliers,
     totalUsers: c.totalUsers ?? plat.totalUsers ?? stats.value?.totalUsers,
     shrinkageUnits30d: c.shrinkageUnits30d ?? inv.shrinkageUnits30d,
     shrinkageValue30d: c.shrinkageValue30d ?? inv.shrinkageValue30d,
@@ -82,6 +82,7 @@ const priorityCounts = computed(() => {
   const d = data.value;
   if (!d) return null;
   if (d.panels?.alertsByPriority) return d.panels.alertsByPriority;
+  if (d.alertsByPriority) return d.alertsByPriority;
   if (d.platformOverview) {
     return {
       critical: d.platformOverview.criticalAlertsCount ?? 0,
@@ -128,21 +129,17 @@ const attentionItems = computed(() => {
   return [];
 });
 
-// Recent movements normalized
+// Recent stock movements (real ledger rows from the backend)
+const OUTFLOW = ['stock_out', 'damaged', 'missing'];
 const recentMovements = computed(() => {
   const d = data.value;
   if (!d) return null;
-  if (d.panels?.recentMovements) return d.panels.recentMovements;
-  if (d.recentAdministrativeActivity) {
-    return d.recentAdministrativeActivity.map((log) => ({
-      movement_id: log.logId,
-      product: { product_name: log.action?.replace(/_/g, ' '), sku: log.entityType },
-      movement_type: log.action?.toLowerCase().includes('delete') ? 'out' : 'in',
-      quantity: 1,
-      date_created: log.createdAt,
-    }));
-  }
-  return [];
+  const rows = d.panels?.recentMovements || d.recentMovements || [];
+  return rows.map((m) => ({
+    ...m,
+    direction: OUTFLOW.includes(m.movement_type) || (m.movement_type === 'adjustment' && m.quantity < 0) ? 'out' : 'in',
+    date_created: m.date_recorded,
+  }));
 });
 
 const onRefresh = () => {
@@ -515,16 +512,16 @@ onMounted(() => {
                   <span
                     :class="[
                       'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
-                      mov.movement_type === 'in' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
-                      mov.movement_type === 'out' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
+                      mov.direction === 'in' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
+                      mov.direction === 'out' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
                       'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'
                     ]"
                   >
-                    {{ mov.movement_type }}
+                    {{ mov.movement_type.replace(/_/g, ' ') }}
                   </span>
                 </td>
                 <td class="py-2.5 text-right font-mono font-bold text-slate-900 dark:text-white">
-                  {{ mov.movement_type === 'out' ? '-' : '+' }}{{ mov.quantity }}
+                  {{ mov.direction === 'out' ? '-' : '+' }}{{ Math.abs(mov.quantity) }}
                 </td>
                 <td class="py-2.5 text-right text-slate-500 dark:text-slate-400">
                   {{ when(mov.date_created) }}
