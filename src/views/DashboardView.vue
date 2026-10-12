@@ -87,7 +87,7 @@ onMounted(() => load(false));
 <template>
   <div class="space-y-6">
     <!-- Operational Command Greeting Banner -->
-    <div class="rounded-2xl bg-white border border-slate-200/90 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="rounded-2xl bg-white border border-slate-200/90 p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div>
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold tracking-widest text-sky-600 uppercase">

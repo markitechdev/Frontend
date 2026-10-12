@@ -121,7 +121,7 @@ onBeforeUnmount(() => {
   >
     <div
       v-if="mobileOpen"
-      class="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-xs lg:hidden"
+      class="fixed inset-0 z-40 bg-slate-950/70 backdrop-blur-sm lg:hidden"
       aria-hidden="true"
       @click="emit('close')"
     />
@@ -191,7 +191,7 @@ onBeforeUnmount(() => {
               :class="[
                 'group flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150',
                 isItemActive(item.to)
-                  ? 'bg-sky-500/10 text-sky-300 font-semibold border-l-2 border-sky-400 shadow-xs'
+                  ? 'bg-sky-500/10 text-sky-300 font-semibold border-l-2 border-sky-400 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800/70'
               ]"
             >

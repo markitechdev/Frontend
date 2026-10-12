@@ -34,14 +34,14 @@ const goBack = () => {
       </div>
 
       <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-xs font-semibold mb-3">
-        <span>HTTP 403</span>
+        <span>Error 403</span>
         <span>·</span>
-        <span>Access Restricted</span>
+        <span>No access</span>
       </div>
 
       <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Access Denied</h1>
       <p class="text-sm text-slate-600 dark:text-slate-300 mt-2.5 leading-relaxed">
-        You do not have authorization to access this administrative resource or platform partition. If you believe this is in error, please contact your platform administrator.
+        Your account does not have permission to open this page. If you need access, please contact your system administrator.
       </p>
 
       <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">

@@ -34,9 +34,9 @@ const goBack = () => {
         <span>Page Not Found</span>
       </div>
 
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Resource Not Found</h1>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Page not found</h1>
       <p class="text-sm text-slate-600 dark:text-slate-300 mt-2.5 leading-relaxed">
-        The requested URL does not match any registered platform or operational route.
+        The page you are looking for does not exist or may have been moved.
       </p>
 
       <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
