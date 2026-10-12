@@ -58,8 +58,8 @@ const SECTIONS = [
   {
     heading: 'Analytics',
     items: [
-      { to: '/reports', label: 'Reports & Analytics', icon: '📈', permission: 'reports.view' },
-      { to: '/finance', label: 'Financial Valuation', icon: '💰', permission: 'finance.view' },
+      { to: '/reports', label: 'Reports & Analytics', icon: '📈', anyOf: ['reports.view', 'reports.generate'] },
+      { to: '/finance', label: 'Financial Valuation', icon: '💰', permission: 'finance.view', anyOf: ['reports.view', 'reports.generate'] },
     ],
   },
   {
@@ -76,7 +76,7 @@ const SECTIONS = [
 const sections = computed(() =>
   SECTIONS.map((s) => ({
     ...s,
-    items: s.items.filter((i) => (i.anyOf ? auth.canAny(...i.anyOf) : (!i.permission || auth.can(i.permission)))),
+    items: s.items.filter((i) => (!i.permission || auth.can(i.permission)) && (!i.anyOf || auth.canAny(...i.anyOf))),
   })).filter((s) => s.items.length)
 );
 

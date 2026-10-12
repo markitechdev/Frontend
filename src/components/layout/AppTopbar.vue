@@ -174,6 +174,7 @@ onBeforeUnmount(() => {
 
             <div class="p-1.5">
               <RouterLink
+                v-if="auth.can('inventory.view')"
                 to="/inventory"
                 class="flex items-center gap-2 px-3 py-2 text-slate-700 hover:bg-slate-50 rounded-lg font-medium transition-colors"
                 @click="menuOpen = false"

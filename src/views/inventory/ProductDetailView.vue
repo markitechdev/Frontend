@@ -3,11 +3,13 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { productsApi } from '@/api';
 import { useToastStore } from '@/stores/toast';
+import { useAuthStore } from '@/stores/auth';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 
 const route = useRoute();
 const router = useRouter();
 const toast = useToastStore();
+const auth = useAuthStore();
 
 const product = ref(null);
 const loading = ref(true);
@@ -73,7 +75,7 @@ onMounted(async () => {
           <div class="card-body">
             <template v-if="product.supplier">
               <p class="font-semibold text-slate-800">{{ product.supplier.supplier_name }}</p>
-              <RouterLink :to="`/suppliers`" class="text-xs text-navy-600 hover:underline">View suppliers</RouterLink>
+              <RouterLink v-if="auth.can('suppliers.view')" :to="`/suppliers`" class="text-xs text-navy-600 hover:underline">View suppliers</RouterLink>
             </template>
             <p v-else class="text-sm text-slate-400">No supplier assigned.</p>
           </div>
@@ -93,7 +95,7 @@ onMounted(async () => {
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">Stock Movement History</h3>
-          <RouterLink to="/movements" class="text-xs font-medium text-navy-600 hover:underline">Full ledger</RouterLink>
+          <RouterLink v-if="auth.can('movements.view')" to="/movements" class="text-xs font-medium text-navy-600 hover:underline">Full ledger</RouterLink>
         </div>
         <div class="overflow-x-auto">
           <table class="table">

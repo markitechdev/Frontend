@@ -21,6 +21,12 @@ const auth = useAuthStore();
  */
 setUnauthorizedHandler(() => {
   const current = router.currentRoute.value;
+  // During the very first navigation the router guard handles the redirect
+  // itself (and keeps the requested deep link), so only clear the session here.
+  if (!current.matched.length) {
+    auth.clearSession();
+    return;
+  }
   const isSuperAdminContext = auth.isSuperAdmin || current.path.startsWith('/super-admin');
 
   auth.clearSession();
