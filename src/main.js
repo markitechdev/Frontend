@@ -19,17 +19,16 @@ const auth = useAuthStore();
  * (expired, revoked, or the account was deactivated). Clear it and send the
  * user to the matching login page, remembering where they were.
  */
-setUnauthorizedHandler(() => {
+setUnauthorizedHandler((err, ctx) => {
   const current = router.currentRoute.value;
+  // Only the side that made the request is signed out (staff and Super Admin
+  // sessions are separate).
+  const side = ctx || auth.context;
+  auth.clearSession(side);
   // During the very first navigation the router guard handles the redirect
-  // itself (and keeps the requested deep link), so only clear the session here.
-  if (!current.matched.length) {
-    auth.clearSession();
-    return;
-  }
-  const isSuperAdminContext = auth.isSuperAdmin || current.path.startsWith('/super-admin');
-
-  auth.clearSession();
+  // itself (and keeps the requested deep link).
+  if (!current.matched.length || side !== auth.context) return;
+  const isSuperAdminContext = side === 'super_admin';
 
   if (!current.meta.public) {
     router.replace({
