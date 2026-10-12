@@ -37,6 +37,7 @@ const getRoleDisplay = (code, name) => {
   else if (c.includes('purchas')) icon = '🛒';
   else if (c.includes('analyst')) icon = '📊';
   else if (c.includes('audit')) icon = '🔍';
+  else if (c.includes('finance')) icon = '💰';
   else if (c === 'staff' || c === 'user') icon = '👤';
   else if (c) icon = '🧩';
   return { icon, text: name || (code ? code.toUpperCase() : 'Staff') };
@@ -50,7 +51,7 @@ const roleBadge = (code) => ({
 const reset = () => {
   Object.assign(form, {
     fullName: '', username: '', email: '', password: '',
-    roleId: roles.value[0]?.roleId ?? '', position: '', contactNumber: '', isActive: true,
+    roleId: availableRoles.value[0]?.roleId ?? '', position: '', contactNumber: '', isActive: true,
   });
   errors.value = []; editingId.value = null;
 };
@@ -59,17 +60,23 @@ const openCreate = () => { reset(); modal.value = true; };
 
 const openEdit = (u) => {
   reset();
-  editingId.value = u.user_id;
+  editingId.value = u.userId;
   Object.assign(form, {
-    fullName: u.full_name, username: u.username, email: u.email,
-    roleId: u.role?.role_id ?? '', position: u.position ?? '',
-    contactNumber: u.contact_number ?? '', isActive: u.is_active,
+    fullName: u.fullName, username: u.username, email: u.email,
+    roleId: u.role?.roleId ?? '', position: u.position ?? '',
+    contactNumber: u.contactNumber ?? '', isActive: u.isActive,
   });
   modal.value = true;
 };
 
 const save = async () => {
-  saving.value = true; errors.value = [];
+  if (saving.value) return;
+  errors.value = [];
+  if (!form.fullName.trim() || !form.username.trim() || (!editingId.value && (!form.email.trim() || form.password.length < 8)) || !form.roleId) {
+    errors.value = ['Please fill in every required field (password: at least 8 characters).'];
+    return;
+  }
+  saving.value = true;
   try {
     if (editingId.value) {
       await usersApi.update(editingId.value, {
@@ -93,20 +100,27 @@ const save = async () => {
   } finally { saving.value = false; }
 };
 
+const rowBusy = ref(null);
 const toggleActive = async (u) => {
+  if (rowBusy.value) return;
+  rowBusy.value = u.userId;
   try {
-    await usersApi.update(u.user_id, { isActive: !u.is_active });
-    toast.success(u.is_active ? 'Account deactivated.' : 'Account reactivated.');
+    await usersApi.update(u.userId, { isActive: !u.isActive });
+    toast.success(u.isActive ? 'Account deactivated.' : 'Account reactivated.');
     await load();
   } catch (e) { toast.error(e.message); }
+  finally { rowBusy.value = null; }
 };
+
+const isSelf = (u) => u.userId === (auth.user?.id || auth.user?.userId);
 
 const deleteModal = ref(false);
 const deleteTarget = ref(null);
 const deleting = ref(false);
 
 const availableRoles = computed(() => {
-  return roles.value.filter((r) => r.roleCode !== 'super_admin' || auth.isSuperAdmin);
+  // Deactivated roles cannot be assigned (the API rejects them), so do not offer them.
+  return roles.value.filter((r) => (r.roleCode !== 'super_admin' || auth.isSuperAdmin) && r.isActive !== false);
 });
 
 const confirmDelete = (u) => {
@@ -115,10 +129,10 @@ const confirmDelete = (u) => {
 };
 
 const executeDelete = async () => {
-  if (!deleteTarget.value) return;
+  if (!deleteTarget.value || deleting.value) return;
   deleting.value = true;
   try {
-    await usersApi.remove(deleteTarget.value.user_id);
+    await usersApi.remove(deleteTarget.value.userId);
     toast.success('Account deleted.');
     deleteModal.value = false;
     deleteTarget.value = null;
@@ -133,20 +147,30 @@ const executeDelete = async () => {
 const openPassword = (u) => { pwTarget.value = u; newPassword.value = ''; pwModal.value = true; };
 
 const savePassword = async () => {
+  if (saving.value) return;
   saving.value = true;
   try {
-    await usersApi.resetPassword(pwTarget.value.user_id, newPassword.value);
-    toast.success(`Password reset for ${pwTarget.value.full_name}.`);
+    await usersApi.resetPassword(pwTarget.value.userId, newPassword.value);
+    toast.success(`Password reset for ${pwTarget.value.fullName}.`);
     pwModal.value = false;
   } catch (e) { toast.error(e.message); }
   finally { saving.value = false; }
 };
 
+const loadError = ref('');
+let requestSeq = 0;
 const load = async () => {
+  const seq = ++requestSeq;
   loading.value = true;
-  try { users.value = await usersApi.list({ search: filters.search, role: filters.role, active: filters.active }); }
-  catch (e) { toast.error(e.message); }
-  finally { loading.value = false; }
+  loadError.value = '';
+  try {
+    const list = await usersApi.list({ search: filters.search, role: filters.role, active: filters.active });
+    if (seq === requestSeq) users.value = list; // ignore out-of-order responses from fast typing
+  } catch (e) {
+    if (seq === requestSeq) loadError.value = e.message;
+  } finally {
+    if (seq === requestSeq) loading.value = false;
+  }
 };
 
 let t;
@@ -185,22 +209,32 @@ onMounted(async () => {
           </thead>
           <TableSkeleton v-if="loading" :columns="7" :rows="5" />
           <tbody v-else>
-            <tr v-if="!users.length"><td colspan="7" class="text-center py-12 text-slate-400">No user accounts found.</td></tr>
-            <tr v-else v-for="u in users" :key="u.user_id">
-              <td class="font-medium text-slate-800">{{ u.full_name }}</td>
+            <tr v-if="loadError">
+              <td colspan="7" class="text-center py-10">
+                <p class="text-sm text-red-600">{{ loadError }}</p>
+                <button class="btn-ghost btn-sm mt-2" @click="load">Try again</button>
+              </td>
+            </tr>
+            <tr v-else-if="!users.length">
+              <td colspan="7" class="text-center py-12 text-slate-400">
+                {{ filters.search || filters.role || filters.active ? 'No accounts match these filters.' : 'No user accounts yet.' }}
+              </td>
+            </tr>
+            <tr v-else v-for="u in users" :key="u.userId">
+              <td class="font-medium text-slate-800">{{ u.fullName }}</td>
               <td class="font-mono text-xs text-slate-500">{{ u.username }}</td>
               <td class="text-slate-600 text-sm">{{ u.email }}</td>
-              <td><span :class="roleBadge(u.role?.role_code)">{{ u.role?.role_name }}</span></td>
+              <td><span :class="roleBadge(u.role?.roleCode)">{{ u.role?.roleName }}</span></td>
               <td class="text-slate-600 text-sm">{{ u.position || '—' }}</td>
-              <td><span :class="u.is_active ? 'badge-green' : 'badge-gray'">{{ u.is_active ? 'Active' : 'Deactivated' }}</span></td>
+              <td><span :class="u.isActive ? 'badge-green' : 'badge-gray'">{{ u.isActive ? 'Active' : 'Deactivated' }}</span></td>
               <td class="text-right whitespace-nowrap">
                 <template v-if="auth.can('users.manage')">
                   <button class="btn-ghost btn-sm mr-1" @click="openEdit(u)">Edit</button>
                   <button class="btn-ghost btn-sm mr-1" @click="openPassword(u)">Password</button>
-                  <button class="btn-ghost btn-sm mr-1" @click="toggleActive(u)">
-                    {{ u.is_active ? 'Disable' : 'Enable' }}
+                  <button class="btn-ghost btn-sm mr-1" :disabled="rowBusy === u.userId || isSelf(u)" :title="isSelf(u) ? 'You cannot disable your own account' : ''" @click="toggleActive(u)">
+                    {{ rowBusy === u.userId ? '…' : (u.isActive ? 'Disable' : 'Enable') }}
                   </button>
-                  <button class="btn-ghost btn-sm text-red-600" @click="confirmDelete(u)">Delete</button>
+                  <button v-if="!isSelf(u)" class="btn-ghost btn-sm text-red-600" @click="confirmDelete(u)">Delete</button>
                 </template>
                 <span v-else class="text-xs text-slate-400">View only</span>
               </td>
@@ -229,7 +263,7 @@ onMounted(async () => {
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <label class="label">Role *</label>
-            <select v-model="form.roleId" class="select">
+            <select v-model="form.roleId" class="select" :disabled="!!editingId && editingId === (auth.user?.id || auth.user?.userId)">
               <option v-for="r in availableRoles" :key="r.roleId" :value="r.roleId">{{ r.roleName }}</option>
             </select>
           </div>
@@ -253,7 +287,7 @@ onMounted(async () => {
     <!-- password modal -->
     <ModalDialog :open="pwModal" title="Reset Password" size="sm" @close="pwModal = false">
       <p class="text-sm text-slate-600 mb-4">
-        Set a new password for <span class="font-semibold">{{ pwTarget?.full_name }}</span>.
+        Set a new password for <span class="font-semibold">{{ pwTarget?.fullName }}</span>.
         Share it with them directly and ask them to change it.
       </p>
       <label class="label">New password</label>
@@ -272,7 +306,7 @@ onMounted(async () => {
           <p class="font-semibold">Destructive Action</p>
           <p class="mt-1">
             Permanently delete the user account for
-            <span class="font-bold underline">{{ deleteTarget?.full_name }}</span>?
+            <span class="font-bold underline">{{ deleteTarget?.fullName }}</span>?
           </p>
           <p class="mt-2 text-xs text-red-700">
             This cannot be undone. Active login sessions for this account will be terminated immediately.

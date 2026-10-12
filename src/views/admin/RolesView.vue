@@ -61,23 +61,24 @@ const roleBadge = (code) => ({
   finance_admin:   'badge-green',
 }[code] || 'badge-gray');
 
+// Users with roles.view (e.g. Staff Admin) can open the matrix read-only; only Super Admin edits it.
+const readOnly = computed(() => !auth.isSuperAdmin || active.value?.roleCode === 'super_admin');
+
 const openEditor = (role) => {
-  if (!auth.isSuperAdmin) {
-    toast.error('Only Super Admin is authorized to modify permission assignments.');
-    return;
-  }
   active.value = role;
   selected.value = new Set(role.permissions.map((p) => p.permission_id));
   editor.value = true;
 };
 
 const toggle = (id) => {
+  if (readOnly.value) return;
   const next = new Set(selected.value);
   next.has(id) ? next.delete(id) : next.add(id);
   selected.value = next;
 };
 
 const toggleModule = (moduleKey) => {
+  if (readOnly.value) return;
   const ids = grouped.value[moduleKey]?.map((p) => p.permission_id) || [];
   const allOn = ids.every((id) => selected.value.has(id));
   const next = new Set(selected.value);
@@ -228,10 +229,10 @@ onMounted(load);
           <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
             <button
               class="btn-ghost btn-sm"
-              :disabled="role.roleCode === 'super_admin' || !auth.isSuperAdmin"
+              :disabled="role.roleCode === 'super_admin'"
               @click="openEditor(role)"
             >
-              {{ role.roleCode === 'super_admin' ? 'Full Access (Protected)' : 'Edit Permissions' }}
+              {{ role.roleCode === 'super_admin' ? 'Full Access (Protected)' : (auth.isSuperAdmin ? 'Edit Permissions' : 'View Permissions') }}
             </button>
 
             <button
@@ -265,6 +266,7 @@ onMounted(load);
           <div class="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200">
             <p class="text-xs font-bold text-slate-800 uppercase tracking-wide">{{ MODULE_LABEL[m] || m }}</p>
             <button
+              v-if="!readOnly"
               type="button"
               class="text-xs font-semibold text-navy-700 hover:text-navy-900 hover:underline"
               @click="toggleModule(m)"
@@ -284,6 +286,7 @@ onMounted(load);
                 type="checkbox"
                 class="mt-0.5 rounded border-slate-300 text-navy-800 focus:ring-navy-500"
                 :checked="selected.has(p.permission_id)"
+                :disabled="readOnly"
                 @change="toggle(p.permission_id)"
               />
               <span class="min-w-0">
@@ -296,8 +299,8 @@ onMounted(load);
       </div>
 
       <template #footer>
-        <button class="btn-ghost" :disabled="saving" @click="editor = false">Cancel</button>
-        <button class="btn-primary" :disabled="saving" @click="savePermissions">
+        <button class="btn-ghost" :disabled="saving" @click="editor = false">{{ readOnly ? 'Close' : 'Cancel' }}</button>
+        <button v-if="!readOnly" class="btn-primary" :disabled="saving" @click="savePermissions">
           {{ saving ? 'Saving…' : 'Save Permission Matrix' }}
         </button>
       </template>

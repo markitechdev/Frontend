@@ -61,11 +61,11 @@ onMounted(async () => {
           <tbody>
             <tr v-if="loading"><td colspan="5" class="text-center py-12 text-slate-400">Loading…</td></tr>
             <tr v-else-if="!users.length"><td colspan="5" class="text-center py-12 text-slate-400">No active accounts.</td></tr>
-            <tr v-else v-for="u in users" :key="u.user_id">
-              <td class="font-medium text-slate-800">{{ u.full_name }}</td>
+            <tr v-else v-for="u in users" :key="u.userId">
+              <td class="font-medium text-slate-800">{{ u.fullName }}</td>
               <td class="text-slate-600">{{ u.position || '—' }}</td>
-              <td><span class="badge-gray">{{ u.role?.role_name }}</span></td>
-              <td class="text-slate-600 text-sm">{{ u.contact_number || '—' }}</td>
+              <td><span class="badge-gray">{{ u.role?.roleName }}</span></td>
+              <td class="text-slate-600 text-sm">{{ u.contactNumber || '—' }}</td>
               <td class="text-slate-600 text-sm">{{ u.email }}</td>
             </tr>
           </tbody>
