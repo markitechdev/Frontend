@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getSession, setSession } from './session.js';
+import { getSession, setSession, getActiveContext } from './session.js';
 
 // Production builds must be given VITE_API_BASE_URL (e.g. https://your-api.vercel.app/api).
 // The localhost fallback only exists in development so it can never ship by accident.
@@ -22,19 +22,20 @@ const AUTH_PATHS = /\/(super-admin\/)?auth\/(login|refresh|logout)$/;
 const isAuthCall = (config) => AUTH_PATHS.test(config?.url || '');
 
 /* -------------------------------------------------------------- token refresh */
-let refreshing = null;
+const refreshing = {}; // one in-flight refresh per side ('user' | 'super_admin')
 
 /**
- * Exchanges the stored refresh token for a new session. Concurrent callers share
- * one in-flight request, so ten parallel 401s cause exactly one refresh.
+ * Exchanges the stored refresh token of one side (staff or Super Admin) for a
+ * new session. Concurrent callers share one in-flight request, so ten
+ * parallel 401s cause exactly one refresh.
  */
-export const refreshSession = () => {
-  if (refreshing) return refreshing;
-  const { refreshToken, context } = getSession();
+export const refreshSession = (ctx = getActiveContext()) => {
+  if (refreshing[ctx]) return refreshing[ctx];
+  const { refreshToken } = getSession(ctx);
   if (!refreshToken) return Promise.reject(new Error('No refresh token'));
 
-  const path = context === 'super_admin' ? '/super-admin/auth/refresh' : '/auth/refresh';
-  refreshing = bare.post(path, { refreshToken })
+  const path = ctx === 'super_admin' ? '/super-admin/auth/refresh' : '/auth/refresh';
+  refreshing[ctx] = bare.post(path, { refreshToken })
     .then((res) => {
       const s = res.data?.data || {};
       if (!s.accessToken) throw new Error('Refresh failed');
@@ -42,21 +43,25 @@ export const refreshSession = () => {
         accessToken: s.accessToken,
         refreshToken: s.refreshToken || refreshToken,
         expiresAt: s.expiresAt ? Number(s.expiresAt) * 1000 : null,
-      });
+      }, ctx);
       return s.accessToken;
     })
-    .finally(() => { refreshing = null; });
-  return refreshing;
+    .finally(() => { refreshing[ctx] = null; });
+  return refreshing[ctx];
 };
 
 const EXPIRY_MARGIN_MS = 60 * 1000;
 
 api.interceptors.request.use(async (config) => {
-  let { accessToken, expiresAt, refreshToken } = getSession();
+  // Remember which side sent the request, so a refresh or sign-out caused by
+  // its response affects only that side's session.
+  const ctx = config._ctx || getActiveContext();
+  config._ctx = ctx;
+  let { accessToken, expiresAt, refreshToken } = getSession(ctx);
 
   // Refresh proactively when the access token is about to expire.
   if (!isAuthCall(config) && accessToken && refreshToken && expiresAt && Date.now() > expiresAt - EXPIRY_MARGIN_MS) {
-    try { accessToken = await refreshSession(); } catch { /* the 401 path below will handle it */ }
+    try { accessToken = await refreshSession(ctx); } catch { /* the 401 path below will handle it */ }
   }
 
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
@@ -92,9 +97,10 @@ api.interceptors.response.use(
     const config = error.config || {};
 
     // Expired access token: refresh once and replay the request.
-    if (status === 401 && !isAuthCall(config) && !config._retried && getSession().refreshToken) {
+    const ctx = config._ctx || getActiveContext();
+    if (status === 401 && !isAuthCall(config) && !config._retried && getSession(ctx).refreshToken) {
       try {
-        const token = await refreshSession();
+        const token = await refreshSession(ctx);
         config._retried = true;
         config.headers = { ...(config.headers || {}), Authorization: `Bearer ${token}` };
         return api.request(config);
@@ -103,7 +109,7 @@ api.interceptors.response.use(
 
     const appError = toAppError(error);
 
-    if (status === 401 && !isAuthCall(config) && onUnauthorized) onUnauthorized(appError);
+    if (status === 401 && !isAuthCall(config) && onUnauthorized) onUnauthorized(appError, ctx);
 
     // Only a failed page-data read means "you cannot see this page". A refused
     // action (save/delete) is reported in place by the view instead of
