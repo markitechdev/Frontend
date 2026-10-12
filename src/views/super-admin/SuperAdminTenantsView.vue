@@ -81,6 +81,10 @@ onMounted(fetchTenants);
 
     <!-- Tenants Table -->
     <div v-else class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+      <p class="px-4 py-3 text-[11px] text-amber-800 bg-amber-50 border-b border-amber-200 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-900">
+        This deployment runs as a single organization: every account and record belongs to this one workspace.
+        Separate client workspaces need an organizations table and per-organization scoping on every query.
+      </p>
       <div v-if="!tenants.length" class="py-16 text-center text-slate-400 text-xs">No client workspaces registered yet.</div>
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-xs">
@@ -89,7 +93,8 @@ onMounted(fetchTenants);
               <th class="py-3 px-4 font-semibold">Workspace Name</th>
               <th class="py-3 px-4 font-semibold">Tenant ID</th>
               <th class="py-3 px-4 font-semibold">Subscription Plan</th>
-              <th class="py-3 px-4 font-semibold">Isolation Boundary</th>
+              <th class="py-3 px-4 font-semibold text-right">Users (active)</th>
+              <th class="py-3 px-4 font-semibold text-right">Products</th>
               <th class="py-3 px-4 font-semibold text-right">Status</th>
             </tr>
           </thead>
@@ -110,9 +115,10 @@ onMounted(fetchTenants);
                   {{ t.plan }}
                 </span>
               </td>
-              <td class="py-3 px-4 text-emerald-600 dark:text-emerald-400 font-medium">
-                Row-Level Enforced
+              <td class="py-3 px-4 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                {{ t.totalUsers ?? '—' }} <span class="text-slate-400">({{ t.activeUsers ?? '—' }})</span>
               </td>
+              <td class="py-3 px-4 text-right tabular-nums text-slate-700 dark:text-slate-300">{{ t.totalProducts ?? '—' }}</td>
               <td class="py-3 px-4 text-right">
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500" />
