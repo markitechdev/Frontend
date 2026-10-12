@@ -19,6 +19,11 @@ const stats = computed(() => dashStore.stats);
 const adminName = computed(() => {
   return auth.user?.fullName || auth.user?.name || 'Administrator';
 });
+const firstName = computed(() => adminName.value.split(' ')[0]);
+const greeting = computed(() => {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+});
 
 const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const num = (n) => (n === null || n === undefined || n === '') ? '--' : Number(n).toLocaleString();
@@ -53,10 +58,11 @@ const cards = computed(() => {
   };
 });
 
-// Telemetry banner normalized values
+// Summary banner values
 const platformStatusDisplay = computed(() => {
   if (loading.value && !data.value) return '--';
-  return stats.value?.platformStatus || data.value?.platformOverview?.platformStatus || 'Healthy';
+  const raw = stats.value?.platformStatus || data.value?.platformOverview?.platformStatus || 'operational';
+  return raw === 'healthy' ? 'Operational' : raw.charAt(0).toUpperCase() + raw.slice(1);
 });
 
 const totalUsersCount = computed(() => {
@@ -116,6 +122,7 @@ const attentionItems = computed(() => {
   const d = data.value;
   if (!d) return null;
   if (d.panels?.lowStockItems) return d.panels.lowStockItems;
+  if (Array.isArray(d.itemsNeedingAttention?.stockItems)) return d.itemsNeedingAttention.stockItems;
   if (d.itemsNeedingAttention?.outOfStockItems) {
     return d.itemsNeedingAttention.outOfStockItems.map((item) => ({
       productId: item.productId,
@@ -158,18 +165,14 @@ onMounted(() => {
       <div>
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
-            Platform Administration
-          </span>
-          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            Live Platform
+            System Administration
           </span>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-1">
-          GOOD DAY,
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white mt-1">
+          {{ greeting }}, {{ firstName }}
         </h1>
-        <p class="text-sm font-medium text-slate-600 dark:text-slate-300">
-          Welcome back, <span class="font-bold text-slate-900 dark:text-white">{{ adminName }}</span>. Here's an overview of your platform operations and inventory telemetry today.
+        <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">
+          Here is today's summary of user accounts, stock levels and alerts.
         </p>
       </div>
 
@@ -178,7 +181,7 @@ onMounted(() => {
           type="button"
           @click="onRefresh"
           :disabled="dashStore.loading"
-          class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-xs disabled:opacity-50"
+          class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition shadow-sm disabled:opacity-50"
         >
           <svg
             :class="['w-4 h-4', dashStore.loading ? 'animate-spin text-indigo-600' : 'text-slate-500']"
@@ -188,14 +191,14 @@ onMounted(() => {
           >
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          <span>{{ dashStore.loading ? 'Updating...' : 'Sync Telemetry' }}</span>
+          <span>{{ dashStore.loading ? 'Refreshing…' : 'Refresh' }}</span>
         </button>
 
         <RouterLink
           to="/super-admin/users"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-xs"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm"
         >
-          <span>Platform Accounts</span>
+          <span>Manage users</span>
           <span>→</span>
         </RouterLink>
       </div>
@@ -222,29 +225,29 @@ onMounted(() => {
       </button>
     </div>
 
-    <!-- Platform Telemetry Banner -->
+    <!-- Summary banner -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-slate-900 text-white shadow-md">
       <div class="px-3 py-2 border-r border-slate-800 last:border-0">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Platform Status</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">System Status</span>
         <p class="text-base font-bold text-emerald-400 flex items-center gap-1.5 mt-0.5">
           <span class="w-2 h-2 rounded-full bg-emerald-500" />
           {{ platformStatusDisplay }}
         </p>
       </div>
       <div class="px-3 py-2 border-r border-slate-800 last:border-0">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Users</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">User Accounts</span>
         <p class="text-base font-bold text-white mt-0.5">
           {{ num(totalUsersCount) }}
         </p>
       </div>
       <div class="px-3 py-2 border-r border-slate-800 last:border-0">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Global Roles</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Roles</span>
         <p class="text-base font-bold text-white mt-0.5">
           {{ num(totalRolesCount) }}
         </p>
       </div>
       <div class="px-3 py-2">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Audit Journal</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Audit Records</span>
         <p class="text-base font-bold text-indigo-300 mt-0.5">
           {{ totalAuditLogsCount !== null && totalAuditLogsCount !== undefined ? `${num(totalAuditLogsCount)} records` : '--' }}
         </p>
@@ -278,54 +281,54 @@ onMounted(() => {
     <template v-else>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Catalog Products"
+          title="Products"
           :value="num(cards?.totalProducts)"
-          subtitle="Active platform SKUs"
+          subtitle="Items in the catalog"
           icon="▦"
         />
         <StatCard
           title="Stock Valuation"
           :value="peso(cards?.totalValue)"
-          subtitle="Aggregate inventory capital"
+          subtitle="Value of stock on hand"
           icon="₱"
         />
         <StatCard
           title="Total Stock Units"
           :value="num(cards?.totalQuantity)"
-          subtitle="Physical on-hand inventory"
+          subtitle="Units currently in stock"
           icon="📦"
         />
         <StatCard
-          title="Low Stock Alert"
+          title="Low Stock"
           :value="num(cards?.lowStock)"
-          subtitle="Products below reorder threshold"
+          subtitle="At or below minimum stock"
           icon="⚠"
           accent="warning"
         />
         <StatCard
           title="Out of Stock"
           :value="num(cards?.outOfStock)"
-          subtitle="Depleted catalog items"
+          subtitle="Products with no stock left"
           icon="⛔"
           accent="danger"
         />
         <StatCard
           title="Reorder Due"
           :value="num(cards?.reorderDue)"
-          subtitle="Suppliers pending PO action"
+          subtitle="At or below reorder point"
           icon="🔄"
           accent="info"
         />
         <StatCard
           title="Active Suppliers"
           :value="num(cards?.activeSuppliers)"
-          subtitle="Verified vendor network"
+          subtitle="Suppliers currently active"
           icon="⛟"
         />
         <StatCard
-          title="Platform Users"
+          title="User Accounts"
           :value="num(cards?.totalUsers)"
-          subtitle="Authorized operational seats"
+          subtitle="Registered system users"
           icon="👥"
         />
       </div>
@@ -333,7 +336,7 @@ onMounted(() => {
       <!-- Alert Distribution and Low Stock Attention Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Priority Distribution Graph -->
-        <div class="lg:col-span-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xs flex flex-col justify-between">
+        <div class="lg:col-span-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
@@ -408,25 +411,25 @@ onMounted(() => {
               to="/super-admin/logs"
               class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center justify-between"
             >
-              <span>Review System Audit Trail</span>
+              <span>View audit logs</span>
               <span>→</span>
             </RouterLink>
           </div>
         </div>
 
         <!-- Critical Stock Attention Table -->
-        <div class="lg:col-span-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
+        <div class="lg:col-span-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
           <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
             <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-              Attention Items & Stock Depletion
+              Products Needing Attention
             </h2>
             <span class="text-xs text-slate-500 dark:text-slate-400">
-              {{ attentionItems !== null ? `${attentionItems.length} flagged` : '--' }}
+              {{ attentionItems !== null ? `${attentionItems.length} product${attentionItems.length === 1 ? '' : 's'}` : '--' }}
             </span>
           </div>
 
           <div v-if="!attentionItems || !attentionItems.length" class="py-12 text-center text-slate-400 text-xs">
-            No stock replenishment flags active at this time.
+            All products are above their reorder points.
           </div>
 
           <div v-else class="mt-3 overflow-x-auto">
@@ -442,7 +445,7 @@ onMounted(() => {
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr
-                  v-for="item in (attentionItems || []).slice(0, 5)"
+                  v-for="item in (attentionItems || []).slice(0, 8)"
                   :key="item.productId"
                   class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40"
                 >
@@ -469,20 +472,20 @@ onMounted(() => {
       </div>
 
       <!-- Recent System Movements Stream -->
-      <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
+      <div class="rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
           <div>
             <h2 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-              Recent Inventory Movements Stream
+              Recent Stock Movements
             </h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Operational inbound and outbound ledger transactions
+              Latest stock received, issued and adjusted
             </p>
           </div>
         </div>
 
         <div v-if="!recentMovements || !recentMovements.length" class="py-12 text-center text-slate-400 text-xs">
-          No recent stock ledger movements recorded.
+          No stock movements recorded yet.
         </div>
 
         <div v-else class="mt-3 overflow-x-auto">
