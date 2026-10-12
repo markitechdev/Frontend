@@ -1,4 +1,5 @@
 import api, { unwrap, unwrapWithMeta } from './client.js';
+import { cached, invalidate } from './cache.js';
 
 const qs = (params = {}) => {
   const clean = Object.fromEntries(
@@ -9,7 +10,7 @@ const qs = (params = {}) => {
 export const superAdminAuthApi = {
   login:   (email, password) => api.post('/super-admin/auth/login', { email, password }).then(unwrap),
   me:      () => api.get('/super-admin/auth/me').then(unwrap),
-  logout:  () => api.post('/super-admin/auth/logout').then(unwrap),
+  logout:  (refreshToken) => api.post('/super-admin/auth/logout', refreshToken ? { refreshToken } : {}).then(unwrap),
   refresh: (refreshToken) => api.post('/super-admin/auth/refresh', { refreshToken }).then(unwrap),
 };
 
@@ -43,7 +44,7 @@ export const superAdminApi = {
 export const authApi = {
   login:   (email, password) => api.post('/auth/login', { email, password }).then(unwrap),
   me:      () => api.get('/auth/me').then(unwrap),
-  logout:  () => api.post('/auth/logout').then(unwrap),
+  logout:  (refreshToken) => api.post('/auth/logout', refreshToken ? { refreshToken } : {}).then(unwrap),
 };
 
 export const dashboardApi = {
@@ -62,13 +63,16 @@ export const productsApi = {
   get:    (id) => api.get(`/products/${id}`).then(unwrap),
   create: (body) => api.post('/products', body).then(unwrap),
   update: (id, body) => api.patch(`/products/${id}`, body).then(unwrap),
-  remove: (id) => api.delete(`/products/${id}`),
+  /** Resolves to { archived: true, message } when the product had history and was archived instead. */
+  remove: (id) => api.delete(`/products/${id}`).then((res) => (res.status === 204 ? { archived: false } : unwrap(res))),
 };
 
 export const movementsApi = {
   list:    (params) => api.get('/movements', qs(params)).then(unwrapWithMeta),
   summary: (params) => api.get('/movements/summary', qs(params)).then(unwrap),
   create:  (body) => api.post('/movements', body).then(unwrap),
+  /** Physical (cycle) count: the server records the variance as missing / adjustment. */
+  count:   (body) => api.post('/movements/count', body).then(unwrap),
 };
 
 export const alertsApi = {
@@ -77,38 +81,57 @@ export const alertsApi = {
   setStatus: (id, status, note) => api.patch(`/alerts/${id}`, { status, note }).then(unwrap),
 };
 
+const mutate = (prefix) => (res) => { invalidate(prefix); return res; };
+
 export const suppliersApi = {
-  list:   (params) => api.get('/suppliers', qs(params)).then(unwrap),
+  list:   (params = {}) => {
+    const run = () => api.get('/suppliers', qs(params)).then(unwrap);
+    // Only the plain "active suppliers" dropdown list is cached; searches always hit the server.
+    return !params.search && params.active === 'true' ? cached('suppliers:active', run) : run();
+  },
   get:    (id) => api.get(`/suppliers/${id}`).then(unwrap),
-  create: (body) => api.post('/suppliers', body).then(unwrap),
-  update: (id, body) => api.patch(`/suppliers/${id}`, body).then(unwrap),
-  remove: (id) => api.delete(`/suppliers/${id}`),
+  create: (body) => api.post('/suppliers', body).then(unwrap).then(mutate('suppliers')),
+  update: (id, body) => api.patch(`/suppliers/${id}`, body).then(unwrap).then(mutate('suppliers')),
+  remove: (id) => api.delete(`/suppliers/${id}`).then(mutate('suppliers')),
 };
 
 export const categoriesApi = {
-  list:   () => api.get('/categories').then(unwrap),
-  create: (body) => api.post('/categories', body).then(unwrap),
-  update: (id, body) => api.patch(`/categories/${id}`, body).then(unwrap),
-  remove: (id) => api.delete(`/categories/${id}`),
+  list:   () => cached('categories', () => api.get('/categories').then(unwrap)),
+  create: (body) => api.post('/categories', body).then(unwrap).then(mutate('categories')),
+  update: (id, body) => api.patch(`/categories/${id}`, body).then(unwrap).then(mutate('categories')),
+  remove: (id) => api.delete(`/categories/${id}`).then(mutate('categories')),
 };
 
 export const usersApi = {
   list:   (params) => api.get('/users', qs(params)).then(unwrap),
   get:    (id) => api.get(`/users/${id}`).then(unwrap),
-  create: (body) => api.post('/users', body).then(unwrap),
-  update: (id, body) => api.patch(`/users/${id}`, body).then(unwrap),
-  remove: (id) => api.delete(`/users/${id}`),
+  create: (body) => api.post('/users', body).then(unwrap).then(mutate('roles')),
+  update: (id, body) => api.patch(`/users/${id}`, body).then(unwrap).then(mutate('roles')),
+  remove: (id) => api.delete(`/users/${id}`).then(mutate('roles')),
   resetPassword: (id, password) => api.post(`/users/${id}/password`, { password }).then(unwrap),
 };
 
 export const rolesApi = {
-  list:        () => api.get('/roles').then(unwrap),
+  list:        () => cached('roles', () => api.get('/roles').then(unwrap), 30_000),
   permissions: () => api.get('/roles/permissions').then(unwrap),
-  create:      (body) => api.post('/roles', body).then(unwrap),
-  setPermissions: (id, permissionIds) => api.put(`/roles/${id}/permissions`, { permissionIds }).then(unwrap),
-  remove:      (id) => api.delete(`/roles/${id}`).then(unwrap),
+  get:         (id) => api.get(`/roles/${id}`).then(unwrap),
+  getUsers:    (id) => api.get(`/roles/${id}/users`).then(unwrap),
+  create:      (body) => api.post('/roles', body).then(unwrap).then(mutate('roles')),
+  setPermissions: (id, permissionIds) => api.put(`/roles/${id}/permissions`, { permissionIds }).then(unwrap).then(mutate('roles')),
+  remove:      (id) => api.delete(`/roles/${id}`).then(unwrap).then(mutate('roles')),
 };
 
 export const logsApi = {
   list: (params) => api.get('/logs', qs(params)).then(unwrapWithMeta),
+};
+
+/** Server-side reports (gated by reports.view on the backend). */
+export const reportsApi = {
+  inventorySummary: (params) => api.get('/reports/inventory-summary', qs(params)).then(unwrapWithMeta),
+  stockMovements:   (params) => api.get('/reports/stock-movements', qs(params)).then(unwrapWithMeta),
+  shrinkage:        (params) => api.get('/reports/shrinkage', qs(params)).then(unwrapWithMeta),
+  lowStock:         (params) => api.get('/reports/low-stock', qs(params)).then(unwrapWithMeta),
+  outOfStock:       (params) => api.get('/reports/out-of-stock', qs(params)).then(unwrapWithMeta),
+  reorder:          (params) => api.get('/reports/reorder', qs(params)).then(unwrapWithMeta),
+  suppliers:        (params) => api.get('/reports/suppliers', qs(params)).then(unwrapWithMeta),
 };

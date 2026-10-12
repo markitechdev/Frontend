@@ -1,17 +1,25 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { authApi, superAdminAuthApi } from '@/api';
+import { getSession, setSession, clearSessionStorage, onSessionChange } from '@/api/session';
+import { hasPermission } from '@/utils/permissions';
 import { useDashboardStore } from './dashboard';
-
-const TOKEN_KEY = 'ims_access_token';
-const USER_KEY  = 'ims_user';
+import { useSuperAdminDashboardStore } from './superAdminDashboard';
 
 export const useAuthStore = defineStore('auth', () => {
-  const user      = ref(JSON.parse(localStorage.getItem(USER_KEY) || 'null'));
-  const token     = ref(localStorage.getItem(TOKEN_KEY) || null);
+  const initial = getSession();
+  const user      = ref(initial.user);
+  const token     = ref(initial.accessToken);
   const loading   = ref(false);
   const error     = ref(null);
   const verified  = ref(false);
+
+  // Mirror token refreshes and other-tab sign-ins/outs into the reactive store.
+  onSessionChange((s) => {
+    token.value = s.accessToken;
+    user.value = s.user;
+    if (!s.accessToken) verified.value = false;
+  });
 
   const isAuthenticated = computed(() => Boolean(token.value && user.value));
   const isSuperAdmin    = computed(() =>
@@ -21,43 +29,46 @@ export const useAuthStore = defineStore('auth', () => {
   const roleName    = computed(() => user.value?.role?.role_name ?? '');
   const permissions = computed(() => user.value?.permissions ?? []);
 
-  // SaaS Tenant & Account boundaries
-  const tenantId    = computed(() => user.value?.tenantId || user.value?.organizationId || 'default-org');
-  const tenantName  = computed(() => user.value?.tenantName || user.value?.organizationName || 'Primary Workspace');
+  // Single-organization deployment: the workspace name is informational only.
+  const tenantId    = computed(() => user.value?.tenantId || 'default-org');
+  const tenantName  = computed(() => user.value?.tenantName || 'Primary Workspace');
 
-  /** True when the signed-in role holds every listed permission or is Super Admin. */
+  /** True when the signed-in role holds every listed permission (same rules as the API). */
   const can = (...codes) => {
     if (isSuperAdmin.value) return true;
-    return codes.every((c) => permissions.value.includes(c));
+    return codes.every((c) => hasPermission(permissions.value, c));
   };
 
-  /** True when the signed-in role holds at least one listed permission or is Super Admin. */
+  /** True when the signed-in role holds at least one listed permission. */
   const canAny = (...codes) => {
     if (isSuperAdmin.value) return true;
-    return codes.some((c) => permissions.value.includes(c));
+    return codes.some((c) => hasPermission(permissions.value, c));
   };
 
-  const persist = (nextUser, nextToken) => {
-    user.value = nextUser;
-    token.value = nextToken;
-    if (nextToken) localStorage.setItem(TOKEN_KEY, nextToken);
-    else localStorage.removeItem(TOKEN_KEY);
-    if (nextUser) localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
-    else localStorage.removeItem(USER_KEY);
+  const startSession = (result, context) => {
+    setSession({
+      accessToken: result.session.accessToken,
+      refreshToken: result.session.refreshToken || null,
+      expiresAt: result.session.expiresAt ? Number(result.session.expiresAt) * 1000 : null,
+      context,
+      user: result.user,
+    });
+    verified.value = true;
+    verifyAttempted = true;
+    try { useDashboardStore().invalidate(); } catch { /* ignore */ }
+    try { useSuperAdminDashboardStore().invalidate(); } catch { /* ignore */ }
   };
 
-  /** Normal tenant user sign in */
+  /** Normal user sign in */
   const login = async (email, password) => {
     loading.value = true;
     error.value = null;
     try {
       const result = await authApi.login(email, password);
-      // Strictly prevent Super Admin accounts from utilizing normal login
       if (result.user?.isSuperAdmin || result.user?.role?.role_code === 'super_admin') {
         throw new Error('Invalid email or password.');
       }
-      persist(result.user, result.session.accessToken);
-      verified.value = true;
+      startSession(result, 'user');
       return result.user;
     } catch (e) {
       error.value = e.message || 'Invalid email or password.';
@@ -67,28 +78,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  /** Normal tenant user sign out */
-  const logout = async () => {
-    try {
-      if (token.value) await authApi.logout();
-    } catch {
-      /* ignore */
-    }
-    clearSession();
-  };
-
   /** Dedicated Super Admin sign in */
   const superAdminLogin = async (email, password) => {
     loading.value = true;
     error.value = null;
     try {
       const result = await superAdminAuthApi.login(email, password);
-      // Authoritatively verify Super Admin identity
       if (!result.user?.isSuperAdmin && result.user?.role?.role_code !== 'super_admin') {
         throw new Error('Invalid credentials or unauthorized account.');
       }
-      persist(result.user, result.session.accessToken);
-      verified.value = true;
+      startSession(result, 'super_admin');
       return result.user;
     } catch (e) {
       error.value = e.message || 'Invalid credentials or unauthorized account.';
@@ -98,50 +97,69 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  /** Dedicated Super Admin sign out */
-  const superAdminLogout = async () => {
+  const signOutRemote = async (fn) => {
+    const { refreshToken } = getSession();
     try {
-      if (token.value) await superAdminAuthApi.logout();
-    } catch {
-      /* ignore */
-    }
+      if (token.value) await fn(refreshToken);
+    } catch { /* the local session is cleared regardless */ }
     clearSession();
   };
 
-  /** Re-reads profile from server to guarantee true verified claims and prevent client-side tampering. */
-  const refreshProfile = async () => {
+  const logout = () => signOutRemote((rt) => authApi.logout(rt));
+  const superAdminLogout = () => signOutRemote((rt) => superAdminAuthApi.logout(rt));
+
+  /**
+   * Re-reads profile and permissions from the server, so a tampered
+   * localStorage or a role change made by the Super Admin is corrected.
+   * Only a real auth failure signs the user out; a network blip does not.
+   */
+  let verifying = null;
+  let verifyAttempted = false;
+  const refreshProfile = () => {
     if (!token.value) {
       verified.value = false;
-      return null;
+      return Promise.resolve(null);
     }
-    try {
-      const me = isSuperAdmin.value
-        ? await superAdminAuthApi.me()
-        : await authApi.me();
-      persist({ ...me, id: me.id }, token.value);
-      verified.value = true;
-      return me;
-    } catch {
-      clearSession();
-      return null;
-    }
+    if (verifying) return verifying;
+    verifying = (async () => {
+      try {
+        const me = isSuperAdmin.value ? await superAdminAuthApi.me() : await authApi.me();
+        setSession({ user: { ...me, id: me.id } });
+        verified.value = true;
+        return me;
+      } catch (e) {
+        if (e.status === 401 || e.status === 403) clearSession();
+        return null;
+      } finally {
+        verifying = null;
+        verifyAttempted = true;
+      }
+    })();
+    return verifying;
   };
 
-  /** Drops session locally. Called on sign-out and on 401. */
+  /**
+   * Ensures the profile was verified with the server once per page load.
+   * If the server is unreachable we do not block every navigation on it; the
+   * API still enforces permissions on every request.
+   */
+  const ensureVerified = () => {
+    if (verified.value || !token.value || verifyAttempted) return Promise.resolve();
+    return refreshProfile();
+  };
+
+  /** Drops the session locally. Called on sign-out and on a final 401. */
   const clearSession = () => {
-    persist(null, null);
+    clearSessionStorage();
     verified.value = false;
-    try {
-      useDashboardStore().invalidate();
-    } catch {
-      /* ignore */
-    }
+    try { useDashboardStore().invalidate(); } catch { /* ignore */ }
+    try { useSuperAdminDashboardStore().invalidate(); } catch { /* ignore */ }
   };
 
   return {
     user, token, loading, error, verified,
     isAuthenticated, isSuperAdmin, roleCode, roleName, permissions,
     tenantId, tenantName,
-    can, canAny, login, superAdminLogin, logout, superAdminLogout, refreshProfile, clearSession,
+    can, canAny, login, superAdminLogin, logout, superAdminLogout, refreshProfile, ensureVerified, clearSession,
   };
 });
