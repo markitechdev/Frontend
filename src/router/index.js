@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { safeRedirect } from '@/utils/permissions';
+import { setActiveContext, contextForPath } from '@/api/session';
 
 /**
  * Route metadata specifications:
@@ -205,6 +206,10 @@ router.beforeEach(async (to) => {
   const auth = useAuthStore();
   const isSuperAdminRoute = Boolean(to.meta.superAdmin || to.path.startsWith('/super-admin'));
 
+  // Staff pages and Super Admin pages use separate sessions. Access Denied and
+  // Page Not Found ('auto' layout) stay on the side the user came from.
+  if (to.meta.layout !== 'auto') setActiveContext(contextForPath(to.path));
+
   // Verify the stored session/permissions with the server once per page load,
   // so guards below never decide on stale or tampered localStorage data.
   let sessionEnded = false;
@@ -215,14 +220,13 @@ router.beforeEach(async (to) => {
 
   // 1. Handling Public Routes
   if (to.meta.public) {
-    if (to.name === 'login' && auth.isAuthenticated) {
-      if (auth.isSuperAdmin) {
-        return { name: 'super-admin-dashboard', replace: true };
-      }
+    // Already signed in on this side: skip the sign-in page.
+    if (to.name === 'login' && auth.isAuthenticated && !auth.isSuperAdmin) {
       return { path: safeRedirect(to.query.redirect, '/dashboard'), replace: true };
     }
     if (to.name === 'super-admin-login' && auth.isAuthenticated && auth.isSuperAdmin) {
-      return { path: safeRedirect(to.query.redirect, '/super-admin/dashboard'), replace: true };
+      const target = safeRedirect(to.query.redirect, '/super-admin/dashboard');
+      return { path: target.startsWith('/super-admin') ? target : '/super-admin/dashboard', replace: true };
     }
     return true;
   }
@@ -240,9 +244,10 @@ router.beforeEach(async (to) => {
       };
     }
 
-    // Authenticated normal user (Admin, Manager, Staff) attempting Super Admin route -> Access Denied
+    // Only a Super Admin account may hold a Super Admin-side session.
     if (!auth.isSuperAdmin) {
-      return { name: 'forbidden', query: { from: to.fullPath }, replace: true };
+      auth.clearSession('super_admin');
+      return { name: 'super-admin-login', query: { redirect: to.fullPath }, replace: true };
     }
 
     // Authenticated Super Admin allowed
@@ -254,9 +259,10 @@ router.beforeEach(async (to) => {
     return { name: 'login', query: loginQuery, replace: true };
   }
 
-  // Super Admin possessing global administrative clearance across all routes
+  // Super Admin accounts sign in only on the Super Admin side.
   if (auth.isSuperAdmin) {
-    return true;
+    auth.clearSession('user');
+    return { name: 'login', query: { redirect: to.fullPath }, replace: true };
   }
 
   // Enforce granular route permissions via replace: true to prevent history trapping

@@ -16,7 +16,7 @@ const layoutComponent = computed(() => {
   // 404 / Access Denied: full shell when signed in, plain page when signed out.
   if (route.meta.layout === 'auto') {
     if (!auth.isAuthenticated) return 'div';
-    return auth.isSuperAdmin && route.query.from?.toString().startsWith('/super-admin') ? SuperAdminLayout : AppLayout;
+    return auth.context === 'super_admin' ? SuperAdminLayout : AppLayout;
   }
   if (route.meta.layout === 'super-admin') return SuperAdminLayout;
   return AppLayout;
