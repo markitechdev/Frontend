@@ -76,7 +76,7 @@ const isItemActive = (path) => {
 
 const onLogout = async () => {
   await auth.superAdminLogout();
-  router.push({ name: 'super-admin-login' });
+  router.replace({ name: 'super-admin-login' });
 };
 
 const handleKeyDown = (e) => {

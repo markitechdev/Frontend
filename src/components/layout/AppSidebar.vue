@@ -20,6 +20,7 @@ const getRoleDisplay = (code, name) => {
   else if (c.includes('purchas')) icon = '🛒';
   else if (c.includes('analyst')) icon = '📊';
   else if (c.includes('audit')) icon = '🔍';
+  else if (c.includes('finance')) icon = '💰';
   else if (c === 'staff' || c === 'user') icon = '👤';
   else if (c) icon = '🧩';
   return { icon, text: name || (code ? code.toUpperCase() : 'Staff') };
@@ -66,7 +67,7 @@ const SECTIONS = [
     items: [
       { to: '/staff', label: 'Staff Operations', icon: '👥', permission: 'staff.view' },
       { to: '/users', label: 'User Accounts', icon: '⚙️', permission: 'users.view' },
-      { to: '/roles', label: 'Roles & Permissions', icon: '🏷️', permission: 'roles.manage' },
+      { to: '/roles', label: 'Roles & Permissions', icon: '🏷️', anyOf: ['roles.view', 'roles.manage'] },
       { to: '/activity', label: 'Audit Trail Logs', icon: '📜', permission: 'logs.view' },
     ],
   },
@@ -75,7 +76,7 @@ const SECTIONS = [
 const sections = computed(() =>
   SECTIONS.map((s) => ({
     ...s,
-    items: s.items.filter((i) => !i.permission || auth.can(i.permission)),
+    items: s.items.filter((i) => (i.anyOf ? auth.canAny(...i.anyOf) : (!i.permission || auth.can(i.permission)))),
   })).filter((s) => s.items.length)
 );
 
@@ -86,7 +87,7 @@ const isItemActive = (path) => {
 
 const onSignOut = async () => {
   await auth.logout();
-  router.push({ name: 'login' });
+  router.replace({ name: 'login' });
 };
 
 const onKeyDown = (e) => {

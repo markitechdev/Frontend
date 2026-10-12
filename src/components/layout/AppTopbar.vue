@@ -25,6 +25,7 @@ const getRoleDisplay = (code, name) => {
   else if (c.includes('purchas')) icon = '🛒';
   else if (c.includes('analyst')) icon = '📊';
   else if (c.includes('audit')) icon = '🔍';
+  else if (c.includes('finance')) icon = '💰';
   else if (c === 'staff' || c === 'user') icon = '👤';
   else if (c) icon = '🧩';
   return { icon, text: name || (code ? code.toUpperCase() : 'Staff') };
@@ -51,7 +52,7 @@ const onSearchSubmit = () => {
 const onSignOut = async () => {
   menuOpen.value = false;
   await auth.logout();
-  router.push({ name: 'login' });
+  router.replace({ name: 'login' });
 };
 
 const onClickOutside = (e) => {
@@ -87,7 +88,7 @@ onBeforeUnmount(() => {
 
       <div class="min-w-0 flex items-center gap-2">
         <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-sky-50 text-sky-800 border border-sky-200">
-          Inventory Operations
+          {{ auth.isSuperAdmin ? 'Platform' : 'Workspace' }}
         </span>
         <span class="hidden sm:inline text-slate-300 font-bold">/</span>
         <h1 class="text-sm sm:text-base font-extrabold text-slate-900 truncate tracking-tight">
@@ -98,7 +99,7 @@ onBeforeUnmount(() => {
 
     <!-- Center: Operational Quick Search Bar -->
     <div class="hidden md:flex items-center flex-1 max-w-sm mx-6">
-      <form class="relative w-full" @submit.prevent="onSearchSubmit">
+      <form v-if="auth.can('inventory.view')" class="relative w-full" @submit.prevent="onSearchSubmit">
         <input
           v-model="searchQuery"
           type="search"

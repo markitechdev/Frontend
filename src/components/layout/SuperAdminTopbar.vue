@@ -28,7 +28,7 @@ const initials = computed(() => {
 const onSignOut = async () => {
   menuOpen.value = false;
   await auth.superAdminLogout();
-  router.push({ name: 'super-admin-login' });
+  router.replace({ name: 'super-admin-login' });
 };
 
 const onClickOutside = (e) => {
