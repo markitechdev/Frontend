@@ -7,6 +7,8 @@ import StatCardSkeleton from '@/components/ui/StatCardSkeleton.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import TableSkeleton from '@/components/ui/TableSkeleton.vue';
 import HorizontalBarChart from '@/components/ui/HorizontalBarChart.vue';
+import VerticalBarChart from '@/components/ui/VerticalBarChart.vue';
+import { compactNumber } from '@/utils/chartScale';
 
 /*
  * Uses the server-side /api/reports/* endpoints, which only require
@@ -28,6 +30,7 @@ const shrinkError = ref('');
 
 const reportType = ref('stock_overview');
 const chartMetric = ref('value');
+const chartLayout = ref('columns'); // 'columns' (standing bars) | 'bars' (horizontal)
 const filters = reactive({ categoryId: '', from: '', to: '' });
 
 const peso = (n) => (n === null || n === undefined || n === '') ? '--' : `₱${Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -210,16 +213,29 @@ const exportCsv = () => {
       <p v-if="dateError" class="w-full text-xs text-red-600">{{ dateError }}</p>
     </div>
 
-    <!-- horizontal graph -->
+    <!-- category graph -->
     <div class="card min-w-0">
       <div class="card-header flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 class="card-title">{{ chartMetric === 'value' ? 'Stock Value by Category' : 'Units on Hand by Category' }}</h3>
           <p class="text-xs text-slate-500 mt-0.5">
-            Total: <strong class="text-slate-800 tabular-nums">{{ chartMetric === 'value' ? peso(inventorySummary?.totalValuation) : `${num(inventorySummary?.totalUnits)} units` }}</strong>
+            Total: <strong class="text-slate-800 dark:text-slate-100 tabular-nums">{{ chartMetric === 'value' ? peso(inventorySummary?.totalValuation) : `${num(inventorySummary?.totalUnits)} units` }}</strong>
           </p>
         </div>
-        <div class="inline-flex rounded-lg border border-slate-200 p-0.5 text-xs" role="group" aria-label="Chart measure">
+        <div class="flex items-center gap-2">
+        <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5" role="group" aria-label="Chart layout">
+          <button type="button" class="p-1.5 rounded-md" title="Standing bars"
+                  :class="chartLayout === 'columns' ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-700'"
+                  :aria-pressed="chartLayout === 'columns'" aria-label="Standing bars" @click="chartLayout = 'columns'">
+            <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="2" y="7" width="3" height="7" rx="0.5"/><rect x="6.5" y="2" width="3" height="12" rx="0.5"/><rect x="11" y="9" width="3" height="5" rx="0.5"/></svg>
+          </button>
+          <button type="button" class="p-1.5 rounded-md" title="Horizontal bars"
+                  :class="chartLayout === 'bars' ? 'bg-navy-700 text-white' : 'text-slate-500 hover:text-slate-700'"
+                  :aria-pressed="chartLayout === 'bars'" aria-label="Horizontal bars" @click="chartLayout = 'bars'">
+            <svg class="w-4 h-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="2" y="2" width="12" height="3" rx="0.5"/><rect x="2" y="6.5" width="7" height="3" rx="0.5"/><rect x="2" y="11" width="9" height="3" rx="0.5"/></svg>
+          </button>
+        </div>
+        <div class="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 text-xs" role="group" aria-label="Chart measure">
           <button type="button" class="px-2.5 py-1 rounded-md"
                   :class="chartMetric === 'value' ? 'bg-navy-700 text-white' : 'text-slate-600'"
                   :aria-pressed="chartMetric === 'value'" @click="chartMetric = 'value'">Value</button>
@@ -227,9 +243,22 @@ const exportCsv = () => {
                   :class="chartMetric === 'units' ? 'bg-navy-700 text-white' : 'text-slate-600'"
                   :aria-pressed="chartMetric === 'units'" @click="chartMetric = 'units'">Units</button>
         </div>
+        </div>
       </div>
       <div class="card-body">
+        <VerticalBarChart
+          v-if="chartLayout === 'columns'"
+          :items="chartItems"
+          :format-value="chartMetric === 'value' ? peso : (v) => `${num(v)} u`"
+          :compact-value="chartMetric === 'value' ? (v) => `₱${compactNumber(v)}` : compactNumber"
+          :measure-label="chartMetric === 'value' ? 'stock value by category' : 'units by category'"
+          :loading="loadingInventory"
+          :error="inventoryError"
+          empty-text="No inventory in this selection."
+          @retry="loadInventory"
+        />
         <HorizontalBarChart
+          v-else
           :items="chartItems"
           :format-value="chartMetric === 'value' ? peso : (v) => `${num(v)} u`"
           :measure-label="chartMetric === 'value' ? 'stock value by category' : 'units by category'"
