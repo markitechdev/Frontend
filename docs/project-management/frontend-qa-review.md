@@ -17,7 +17,7 @@ This document reviews and organizes the client-side QA findings identified by QA
 ## 2. Review of Frontend QA Domains
 
 ### 2.1 Super Admin Login UI
-- **Findings:** Pre-populated demo accounts with plaintext passwords (`SuperAdmin123!`) embedded in the client source bundle; absence of input length pre-validation; generic error display with no field association.
+- **Findings:** Pre-populated demo accounts with plaintext passwords (`[redacted]`) embedded in the client source bundle; absence of input length pre-validation; generic error display with no field association.
 - **Priority:** P1 (High)
 - **Target Component:** `src/views/auth/LoginView.vue`
 

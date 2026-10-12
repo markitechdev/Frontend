@@ -28,13 +28,13 @@ High
 1. Navigate to `/login` in any browser on desktop or mobile.
 2. Scroll to the "Demo accounts" section below the sign-in form.
 3. Observe buttons for "Super Admin", "Warehouse Admin", "Staff Admin", and "Finance Admin".
-4. Click "Super Admin" and view the form fields being automatically populated with `superadmin@ims.local` and plaintext password `SuperAdmin123!`.
+4. Click "Super Admin" and view the form fields being automatically populated with `superadmin@ims.local` and plaintext password `[redacted]`.
 
 **Expected Result:**  
 Production login interfaces must not expose pre-configured administrator credentials or test accounts in client-side code bundles. Demo helpers should be strictly guarded behind environment flags (`import.meta.env.DEV`) or removed in production builds.
 
 **Actual Result:**  
-Hardcoded demo credentials including Super Admin password (`SuperAdmin123!`) are permanently embedded in the client source bundle and displayed publicly on the UI.
+Hardcoded demo credentials including Super Admin password (`[redacted]`) are permanently embedded in the client source bundle and displayed publicly on the UI.
 
 **Developer Task:**  
 Guard the demo accounts section behind `import.meta.env.DEV` condition and remove production fallback credentials.

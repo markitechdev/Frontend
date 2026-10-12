@@ -15,21 +15,6 @@ const submitting = ref(false);
 
 const errors = reactive({ email: '', password: '' });
 
-// Demo credentials guarded exclusively for development environment
-const isDev = Boolean(import.meta.env.DEV);
-const DEMO = import.meta.env.DEV ? [
-  { role: 'Warehouse Admin', email: 'warehouse@ims.local',  password: 'Warehouse123!'  },
-  { role: 'Staff Admin',     email: 'staff@ims.local',      password: 'StaffAdmin123!' },
-  { role: 'Finance Admin',   email: 'finance@ims.local',    password: 'Finance123!'    },
-] : [];
-
-const useDemo = (d) => {
-  email.value = d.email;
-  password.value = d.password;
-  errors.email = '';
-  errors.password = '';
-};
-
 // Redirect already authenticated users away from the login view
 onMounted(() => {
   if (auth.isAuthenticated) {
@@ -255,26 +240,6 @@ const submit = async () => {
         </form>
 
         <!-- Development Environment Quick-Fill (Only in import.meta.env.DEV) -->
-        <div v-if="isDev && DEMO.length" class="mt-8 pt-6 border-t border-slate-200">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
-              Dev Environment Quick Fill
-            </p>
-            <span class="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-mono font-medium">DEV ONLY</span>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button
-              v-for="d in DEMO"
-              :key="d.email"
-              type="button"
-              class="text-left rounded-lg border border-slate-200 p-2.5 hover:border-navy-400 hover:bg-slate-50 transition-colors"
-              @click="useDemo(d)"
-            >
-              <p class="text-xs font-semibold text-slate-800">{{ d.role }}</p>
-              <p class="text-[11px] text-slate-400 truncate">{{ d.email }}</p>
-            </button>
-          </div>
-        </div>
 
         <div class="mt-8 text-center text-xs text-slate-400">
           <p>Protected by role-based identity checks and session token verification.</p>

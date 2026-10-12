@@ -15,23 +15,6 @@ const submitting = ref(false);
 
 const errors = reactive({ email: '', password: '' });
 
-// Dev environment demo account for Super Admin testing
-const isDev = Boolean(import.meta.env.DEV);
-// Defined only in development builds so the password never ships in the production bundle.
-const SUPER_ADMIN_DEMO = import.meta.env.DEV ? {
-  role: 'Platform Super Admin',
-  email: 'superadmin@ims.local',
-  password: 'SuperAdmin123!',
-} : null;
-
-const useSuperAdminDemo = () => {
-  if (!SUPER_ADMIN_DEMO) return;
-  email.value = SUPER_ADMIN_DEMO.email;
-  password.value = SUPER_ADMIN_DEMO.password;
-  errors.email = '';
-  errors.password = '';
-};
-
 onMounted(() => {
   if (auth.isAuthenticated && auth.isSuperAdmin) {
     const target = safeRedirect(route.query.redirect, '/super-admin/dashboard');
@@ -274,22 +257,6 @@ const submit = async () => {
         </form>
 
         <!-- Development Quick-Fill -->
-        <div v-if="isDev && SUPER_ADMIN_DEMO" class="mt-8 pt-6 border-t border-slate-200">
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
-              Dev Super Admin Credentials
-            </p>
-            <span class="text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-mono font-medium">SUPER ADMIN ONLY</span>
-          </div>
-          <button
-            type="button"
-            class="w-full text-left rounded-lg border border-purple-200 bg-purple-50/50 p-2.5 hover:border-purple-400 hover:bg-purple-50 transition-colors focus:outline-hidden focus:ring-2 focus:ring-purple-500"
-            @click="useSuperAdminDemo"
-          >
-            <p class="text-xs font-semibold text-purple-900">{{ SUPER_ADMIN_DEMO.role }}</p>
-            <p class="text-[11px] text-purple-600 font-mono">{{ SUPER_ADMIN_DEMO.email }}</p>
-          </button>
-        </div>
 
         <div class="mt-8 text-center text-xs text-slate-400">
           Restricted platform area. Unauthorized access attempts are monitored and recorded.
