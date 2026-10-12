@@ -8,6 +8,7 @@
  *  - built-in loading, empty and error states
  */
 import { computed, ref } from 'vue';
+import { niceScale, compactNumber } from '@/utils/chartScale';
 
 const props = defineProps({
   /** [{ label: string, value: number, detail?: string }] */
@@ -45,16 +46,10 @@ const rows = computed(() => {
   }];
 });
 
-/** Rounds the axis maximum up to 1, 2, 2.5 or 5 x 10^n so gridlines land on readable numbers. */
-const niceMax = computed(() => {
-  const max = Math.max(0, ...rows.value.map((d) => d.value));
-  if (max <= 0) return 1;
-  const exp = 10 ** Math.floor(Math.log10(max));
-  const f = max / exp;
-  const step = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10;
-  return step * exp;
-});
-const ticks = computed(() => [0, 0.25, 0.5, 0.75, 1].map((t) => t * niceMax.value));
+/** Round axis steps (0, 10k, 20k ...) so gridlines land on readable numbers. */
+const scale = computed(() => niceScale(Math.max(0, ...rows.value.map((d) => d.value))));
+const niceMax = computed(() => scale.value.max);
+const ticks = computed(() => scale.value.ticks);
 
 const widthPct = (v) => {
   if (!v) return '0%';
@@ -63,12 +58,7 @@ const widthPct = (v) => {
 };
 const share = (v) => (total.value ? ((v / total.value) * 100).toFixed(1) : '0.0');
 
-const compact = (v) => {
-  const n = Number(v);
-  if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)}M`;
-  if (n >= 1e3) return `${(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}k`;
-  return Number.isInteger(n) ? String(n) : n.toFixed(1);
-};
+const compact = compactNumber;
 
 const summary = computed(() => rows.value
   .map((d) => `${d.label}: ${props.formatValue(d.value)} (${share(d.value)}%)`)
@@ -159,7 +149,7 @@ const summary = computed(() => rows.value
             v-for="(t, i) in ticks"
             :key="i"
             class="absolute -translate-x-1/2"
-            :class="{ 'hidden sm:inline': i % 2 === 1 }"
+            :class="{ 'hidden sm:inline': i % 2 === 1 && ticks.length > 4 }"
             :style="{ left: `${(t / niceMax) * 100}%` }"
           >{{ compact(t) }}</span>
         </div>
