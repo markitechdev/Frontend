@@ -26,6 +26,9 @@ const year = new Date().getFullYear();
     >
       <!-- subtle grid texture -->
       <div class="absolute inset-0 opacity-[0.06] pointer-events-none auth-grid" aria-hidden="true" />
+      <!-- slowly drifting light -->
+      <div aria-hidden="true" class="pointer-events-none absolute -left-24 top-1/4 h-80 w-80 rounded-full bg-sky-500/25 blur-3xl float-slow" />
+      <div aria-hidden="true" class="pointer-events-none absolute -right-28 bottom-6 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl float-slower" />
 
       <div class="relative">
         <AppLogo
@@ -43,8 +46,8 @@ const year = new Date().getFullYear();
         <p v-if="description" class="mt-4 text-[15px] leading-relaxed text-white/70">{{ description }}</p>
 
         <ul v-if="points.length" class="mt-10 space-y-4 border-t border-white/10 pt-8">
-          <li v-for="p in points" :key="p.title" class="flex gap-3.5">
-            <span class="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-white/10 ring-1 ring-white/20 grid place-items-center" aria-hidden="true">
+          <li v-for="(p, i) in points" :key="p.title" class="anim-rise group flex gap-3.5" :style="{ '--d': 4 + i * 2 }">
+            <span class="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-white/10 ring-1 ring-white/20 grid place-items-center transition-colors duration-300 group-hover:bg-sky-400/30 group-hover:ring-sky-300/50" aria-hidden="true">
               <svg class="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="m2.5 6.2 2.3 2.3 4.7-4.9" /></svg>
             </span>
             <div>

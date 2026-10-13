@@ -17,21 +17,15 @@ defineProps({
 
 <template>
   <span class="inline-flex items-center gap-3 min-w-0" :class="{ 'ims-logo--animate': animate }">
-    <svg
-      class="ims-logo shrink-0"
-      :width="size"
-      :height="size"
-      viewBox="0 0 64 64"
-      role="img"
-      aria-label="IMS logo"
-    >
-      <polygon class="ims-face ims-left" points="10,18 32,30 32,56 10,44" fill="#0ea5e9" />
-      <polygon class="ims-face ims-right" points="54,18 32,30 32,56 54,44" fill="#0369a1" />
-      <polygon class="ims-face ims-top" points="32,6 54,18 32,30 10,18" fill="#7dd3fc" />
-      <polygon class="ims-bar ims-b1" points="35,51.16 39,48.98 39,40.98 35,43.16" fill="#e0f2fe" />
-      <polygon class="ims-bar ims-b2" points="41.5,47.62 45.5,45.44 45.5,32.44 41.5,34.62" fill="#e0f2fe" />
-      <polygon class="ims-bar ims-b3" points="48,44.07 52,41.89 52,23.89 48,26.07" fill="#e0f2fe" />
-    </svg>
+    <!-- one layer per shape, so the animation runs on the GPU -->
+    <span class="ims-logo relative shrink-0" :style="{ width: `${size}px`, height: `${size}px` }" role="img" aria-label="IMS logo">
+      <svg class="ims-face ims-left" viewBox="0 0 64 64" aria-hidden="true"><polygon points="10,18 32,30 32,56 10,44" fill="#0ea5e9" /></svg>
+      <svg class="ims-face ims-right" viewBox="0 0 64 64" aria-hidden="true"><polygon points="54,18 32,30 32,56 54,44" fill="#0369a1" /></svg>
+      <svg class="ims-face ims-top" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,6 54,18 32,30 10,18" fill="#7dd3fc" /></svg>
+      <svg class="ims-bar ims-b1" viewBox="0 0 64 64" aria-hidden="true"><polygon points="35,51.16 39,48.98 39,40.98 35,43.16" fill="#e0f2fe" /></svg>
+      <svg class="ims-bar ims-b2" viewBox="0 0 64 64" aria-hidden="true"><polygon points="41.5,47.62 45.5,45.44 45.5,32.44 41.5,34.62" fill="#e0f2fe" /></svg>
+      <svg class="ims-bar ims-b3" viewBox="0 0 64 64" aria-hidden="true"><polygon points="48,44.07 52,41.89 52,23.89 48,26.07" fill="#e0f2fe" /></svg>
+    </span>
     <span v-if="withText" class="min-w-0 leading-tight">
       <span
         class="ims-word block font-bold tracking-[0.2em]"
@@ -48,27 +42,25 @@ defineProps({
 </template>
 
 <style scoped>
-.ims-logo { overflow: visible; }
+.ims-logo svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 
+/* offsets are a share of the logo size, so every size moves the same way */
 .ims-logo--animate .ims-face {
-  transform-box: fill-box;
-  transform-origin: center;
   opacity: 0;
   animation: ims-face-in 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.25) forwards;
 }
-.ims-logo--animate .ims-left  { --dx: -10px; --dy: 6px;   animation-delay: 0.05s; }
-.ims-logo--animate .ims-right { --dx: 10px;  --dy: 6px;   animation-delay: 0.18s; }
-.ims-logo--animate .ims-top   { --dx: 0px;   --dy: -12px; animation-delay: 0.31s; }
+.ims-logo--animate .ims-left  { --dx: -16%; --dy: 9%;   transform-origin: 33% 58%; animation-delay: 0.05s; }
+.ims-logo--animate .ims-right { --dx: 16%;  --dy: 9%;   transform-origin: 67% 58%; animation-delay: 0.18s; }
+.ims-logo--animate .ims-top   { --dx: 0%;   --dy: -19%; transform-origin: 50% 28%; animation-delay: 0.31s; }
 
+/* bars grow from their bottom edge (origin = the bar's bottom in the 64x64 drawing) */
 .ims-logo--animate .ims-bar {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
   transform: scaleY(0);
   animation: ims-bar-up 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) forwards;
 }
-.ims-logo--animate .ims-b1 { animation-delay: 0.72s; }
-.ims-logo--animate .ims-b2 { animation-delay: 0.84s; }
-.ims-logo--animate .ims-b3 { animation-delay: 0.96s; }
+.ims-logo--animate .ims-b1 { transform-origin: 57.8% 79.9%; animation-delay: 0.72s; }
+.ims-logo--animate .ims-b2 { transform-origin: 68% 74.4%;   animation-delay: 0.84s; }
+.ims-logo--animate .ims-b3 { transform-origin: 78.1% 68.9%; animation-delay: 0.96s; }
 
 .ims-logo--animate .ims-word,
 .ims-logo--animate .ims-sub {
