@@ -217,7 +217,7 @@ const exportCsv = () => {
     <div class="card min-w-0">
       <div class="card-header flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 class="card-title">{{ chartMetric === 'value' ? 'Stock Value by Category' : 'Units on Hand by Category' }}</h3>
+          <h2 class="card-title">{{ chartMetric === 'value' ? 'Stock Value by Category' : 'Units on Hand by Category' }}</h2>
           <p class="text-xs text-slate-500 mt-0.5">
             Total: <strong class="text-slate-800 dark:text-slate-100 tabular-nums">{{ chartMetric === 'value' ? peso(inventorySummary?.totalValuation) : `${num(inventorySummary?.totalUnits)} units` }}</strong>
           </p>
@@ -274,7 +274,7 @@ const exportCsv = () => {
       <!-- shrinkage summary -->
       <div class="card lg:col-span-1 min-w-0">
         <div class="card-header">
-          <h3 class="card-title">Shrinkage Summary</h3>
+          <h2 class="card-title">Shrinkage Summary</h2>
           <span class="text-[11px] text-slate-400">{{ filters.from || filters.to ? 'Selected dates' : 'All time' }}</span>
         </div>
         <div class="card-body space-y-3 text-sm">
@@ -304,9 +304,9 @@ const exportCsv = () => {
       <!-- report table -->
       <div class="card lg:col-span-2 min-w-0">
         <div class="card-header">
-          <h3 class="card-title">
+          <h2 class="card-title">
             {{ { low_stock: 'Items Below Threshold', shrinkage: 'Shrinkage Events', category: 'Category Valuation' }[reportType] || 'Stock Overview' }}
-          </h3>
+          </h2>
           <span class="text-xs text-slate-400">
             {{ (reportType === 'shrinkage' ? shrinkRows : reportType === 'category' ? byCategory : tableRows).length }} row(s)
           </span>

@@ -38,7 +38,7 @@ const year = new Date().getFullYear();
       </div>
 
       <div class="relative max-w-md">
-        <p v-if="eyebrow" class="text-xs font-semibold uppercase tracking-[0.14em] text-white/50 mb-4">{{ eyebrow }}</p>
+        <p v-if="eyebrow" class="text-xs font-semibold uppercase tracking-[0.14em] text-white/70 mb-4">{{ eyebrow }}</p>
         <h1 class="text-[2rem] leading-tight font-semibold tracking-tight">{{ heading }}</h1>
         <p v-if="description" class="mt-4 text-[15px] leading-relaxed text-white/70">{{ description }}</p>
 
@@ -55,7 +55,7 @@ const year = new Date().getFullYear();
         </ul>
       </div>
 
-      <div class="relative flex items-center justify-between text-xs text-white/50">
+      <div class="relative flex items-center justify-between text-xs text-white/70">
         <span>&copy; {{ year }} Inventory Management System</span>
         <span>For authorized personnel only</span>
       </div>
@@ -80,7 +80,7 @@ const year = new Date().getFullYear();
         </div>
       </div>
 
-      <footer class="px-6 sm:px-12 py-5 border-t border-slate-100 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2">
+      <footer class="px-6 sm:px-12 py-5 border-t border-slate-100 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
         <span>&copy; {{ year }} Inventory Management System. All rights reserved.</span>
         <slot name="footer" />
       </footer>

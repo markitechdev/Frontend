@@ -60,7 +60,7 @@ onMounted(load);
 
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">System Activity Log</h3>
+        <h2 class="card-title">System Activity Log</h2>
         <span class="text-xs text-slate-400">{{ loading ? '-- entries' : `${pagination?.total ?? rows.length} entries (most recent first)` }}</span>
       </div>
       <div class="overflow-x-auto">

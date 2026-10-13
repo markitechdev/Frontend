@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Grid items may shrink below their content width, so wide tables scroll
+   inside their card instead of widening the whole page on phones. */
+.grid > * { min-width: 0; }
+
 :root {
   --admin-bg: #F4F7FA;
   --admin-surface: #FFFFFF;
@@ -57,7 +61,7 @@
     @apply btn bg-slate-900 text-white hover:bg-slate-800 border border-slate-800 shadow-sm focus:ring-sky-500;
   }
   .btn-accent {
-    @apply btn bg-sky-600 text-white hover:bg-sky-500 border border-sky-500 shadow-sm focus:ring-sky-400;
+    @apply btn bg-sky-700 text-white hover:bg-sky-800 border border-sky-700 shadow-sm focus:ring-sky-400;
   }
   .btn-ghost {
     @apply btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus:ring-slate-300 shadow-sm;

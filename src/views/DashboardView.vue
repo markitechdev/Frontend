@@ -24,6 +24,8 @@ const when = (d) => new Date(d).toLocaleString('en-PH', { month: 'short', day: '
 const cards   = computed(() => data.value?.cards ?? {});
 // Each role only receives the cards its permissions allow; show the matching layout.
 const hasInventory = computed(() => cards.value.totalProducts !== undefined);
+// Known before the data arrives, so the greeting banner doesn't change size on load.
+const bannerInventory = computed(() => hasInventory.value || auth.can('inventory.view'));
 
 /** Signed quantity: outflows negative, adjustments keep their own sign. */
 const signedQty = (m) => {
@@ -90,10 +92,10 @@ onMounted(() => load(false));
     <div class="rounded-2xl bg-white border border-slate-200/90 p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div>
         <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold tracking-widest text-sky-600 uppercase">
-            {{ hasInventory ? 'Warehouse Operations' : 'Workspace Overview' }}
+          <span class="text-[11px] font-bold tracking-widest text-sky-700 uppercase">
+            {{ bannerInventory ? 'Warehouse Operations' : 'Workspace Overview' }}
           </span>
-          <span v-if="hasInventory" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <span v-if="bannerInventory" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Live Inventory
           </span>
@@ -297,9 +299,9 @@ onMounted(() => load(false));
           <div class="card-header">
             <div class="flex items-center gap-2">
               <span class="text-base">🚨</span>
-              <h3 class="card-title">Items Needing Immediate Action</h3>
+              <h2 class="card-title">Items Needing Immediate Action</h2>
             </div>
-            <RouterLink to="/inventory" class="text-xs font-bold text-sky-600 hover:text-sky-700 hover:underline">
+            <RouterLink to="/inventory" class="text-xs font-bold text-sky-700 hover:text-sky-800 hover:underline">
               Open Inventory Catalog →
             </RouterLink>
           </div>
@@ -316,7 +318,7 @@ onMounted(() => load(false));
               </thead>
               <tbody>
                 <tr v-if="!panels.lowStockItems.length">
-                  <td colspan="5" class="text-center py-10 text-slate-400 font-medium">
+                  <td colspan="5" class="text-center py-10 text-slate-500 font-medium">
                     All inventory catalog items are currently above safety thresholds.
                   </td>
                 </tr>
@@ -341,9 +343,9 @@ onMounted(() => load(false));
           <div class="card-header">
             <div class="flex items-center gap-2">
               <span class="text-base">⚡</span>
-              <h3 class="card-title">Alerts by Priority</h3>
+              <h2 class="card-title">Alerts by Priority</h2>
             </div>
-            <RouterLink to="/alerts" class="text-xs font-bold text-sky-600 hover:text-sky-700 hover:underline">
+            <RouterLink to="/alerts" class="text-xs font-bold text-sky-700 hover:text-sky-800 hover:underline">
               View All →
             </RouterLink>
           </div>
@@ -356,7 +358,7 @@ onMounted(() => load(false));
               <div class="flex items-center justify-between text-xs mb-1.5 font-bold">
                 <StatusBadge :status="level" />
                 <div class="flex items-center gap-1.5 tabular-nums">
-                  <span class="text-[11px] text-slate-400">({{ priorityPct(count) }}%)</span>
+                  <span class="text-[11px] text-slate-500">({{ priorityPct(count) }}%)</span>
                   <span class="text-slate-800">{{ count }}</span>
                 </div>
               </div>
@@ -373,7 +375,7 @@ onMounted(() => load(false));
                 />
               </div>
             </div>
-            <p v-if="!priorityTotal" class="text-xs text-slate-400 text-center py-4 font-medium">
+            <p v-if="!priorityTotal" class="text-xs text-slate-500 text-center py-4 font-medium">
               No active operational alerts requiring intervention.
             </p>
           </div>
@@ -384,9 +386,9 @@ onMounted(() => load(false));
           <div class="card-header">
             <div class="flex items-center gap-2">
               <span class="text-base">🔄</span>
-              <h3 class="card-title">Recent Stock Movement Stream</h3>
+              <h2 class="card-title">Recent Stock Movement Stream</h2>
             </div>
-            <RouterLink to="/movements" class="text-xs font-bold text-sky-600 hover:text-sky-700 hover:underline">
+            <RouterLink to="/movements" class="text-xs font-bold text-sky-700 hover:text-sky-800 hover:underline">
               Ledger Transactions →
             </RouterLink>
           </div>
@@ -403,7 +405,7 @@ onMounted(() => load(false));
               </thead>
               <tbody>
                 <tr v-if="!panels.recentMovements.length">
-                  <td colspan="5" class="text-center py-10 text-slate-400 font-medium">
+                  <td colspan="5" class="text-center py-10 text-slate-500 font-medium">
                     No movement ledger entries recorded yet.
                   </td>
                 </tr>
@@ -429,7 +431,7 @@ onMounted(() => load(false));
           <div class="card-header">
             <div class="flex items-center gap-2">
               <span class="text-base">👥</span>
-              <h3 class="card-title">Workspace Roles</h3>
+              <h2 class="card-title">Workspace Roles</h2>
             </div>
           </div>
           <div class="card-body space-y-2.5">
@@ -452,14 +454,14 @@ onMounted(() => load(false));
           <div class="card-header">
             <div class="flex items-center gap-2">
               <span class="text-base">📜</span>
-              <h3 class="card-title">Recent Operational Activity</h3>
+              <h2 class="card-title">Recent Operational Activity</h2>
             </div>
-            <RouterLink to="/activity" class="text-xs font-bold text-sky-600 hover:text-sky-700 hover:underline">
+            <RouterLink to="/activity" class="text-xs font-bold text-sky-700 hover:text-sky-800 hover:underline">
               View Audit Trail →
             </RouterLink>
           </div>
           <div class="card-body space-y-2">
-            <div v-if="!panels.recentActivity.length" class="text-xs text-slate-400 text-center py-6 font-medium">
+            <div v-if="!panels.recentActivity.length" class="text-xs text-slate-500 text-center py-6 font-medium">
               No recent audit trail entries logged.
             </div>
             <div

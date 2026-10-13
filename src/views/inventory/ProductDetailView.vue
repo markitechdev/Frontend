@@ -53,7 +53,7 @@ onMounted(async () => {
 
       <div class="grid gap-4 lg:grid-cols-3">
         <div class="card lg:col-span-1">
-          <div class="card-header"><h3 class="card-title">Details</h3></div>
+          <div class="card-header"><h2 class="card-title">Details</h2></div>
           <div class="card-body space-y-3 text-sm">
             <div class="flex justify-between"><span class="text-slate-500">Unit price</span>
               <span class="font-medium">{{ peso(product.unit_price) }}</span></div>
@@ -71,7 +71,7 @@ onMounted(async () => {
         </div>
 
         <div class="card lg:col-span-1">
-          <div class="card-header"><h3 class="card-title">Supplier</h3></div>
+          <div class="card-header"><h2 class="card-title">Supplier</h2></div>
           <div class="card-body">
             <template v-if="product.supplier">
               <p class="font-semibold text-slate-800">{{ product.supplier.supplier_name }}</p>
@@ -82,7 +82,7 @@ onMounted(async () => {
         </div>
 
         <div class="card lg:col-span-1">
-          <div class="card-header"><h3 class="card-title">Valuation</h3></div>
+          <div class="card-header"><h2 class="card-title">Valuation</h2></div>
           <div class="card-body">
             <p class="text-xs text-slate-500">Stock value at current unit price</p>
             <p class="text-2xl font-bold text-slate-900 mt-1">
@@ -94,7 +94,7 @@ onMounted(async () => {
 
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">Stock Movement History</h3>
+          <h2 class="card-title">Stock Movement History</h2>
           <RouterLink v-if="auth.can('movements.view')" to="/movements" class="text-xs font-medium text-navy-600 hover:underline">Full ledger</RouterLink>
         </div>
         <div class="overflow-x-auto">

@@ -64,7 +64,7 @@ onMounted(load);
 
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Highest-Value Inventory Holdings</h3>
+        <h2 class="card-title">Highest-Value Inventory Holdings</h2>
         <RouterLink to="/reports" class="text-xs font-medium text-navy-600 hover:underline">Full report</RouterLink>
       </div>
       <div class="overflow-x-auto">
