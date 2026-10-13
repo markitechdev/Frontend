@@ -305,7 +305,7 @@ onMounted(() => {
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
       <div>
         <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
+          <span class="text-xs font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
             Administration
           </span>
         </div>
@@ -396,6 +396,7 @@ onMounted(() => {
           <div class="flex items-center gap-2 w-full sm:w-auto">
             <select
               v-model="selectedRoleFilter"
+              aria-label="Filter by role"
               class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="ALL">All Roles</option>
@@ -406,6 +407,7 @@ onMounted(() => {
 
             <select
               v-model="selectedStatusFilter"
+              aria-label="Filter by status"
               class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="ALL">All Status</option>
@@ -432,7 +434,7 @@ onMounted(() => {
       <!-- Users Table -->
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+          <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-xs">
             <tr>
               <th class="py-3 px-4 font-semibold">User</th>
               <th class="py-3 px-4 font-semibold">Username</th>
@@ -455,7 +457,7 @@ onMounted(() => {
                   </div>
                   <div>
                     <p class="font-semibold text-slate-900 dark:text-white">{{ u.fullName || u.full_name }}</p>
-                    <p class="text-[11px] text-slate-400 font-mono">{{ u.email }}</p>
+                    <p class="text-xs text-slate-400 font-mono">{{ u.email }}</p>
                   </div>
                 </div>
               </td>
@@ -464,7 +466,7 @@ onMounted(() => {
               </td>
               <td class="py-3 px-4">
                 <span
-                  :class="['inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[11px] font-bold tracking-wide', getRoleBadgeClasses(u.role)]"
+                  :class="['inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-xs font-bold tracking-wide', getRoleBadgeClasses(u.role)]"
                 >
                   <span>{{ u.role?.icon || '👤' }}</span>
                   <span>{{ u.role?.roleName || u.role?.role_name || u.role?.roleCode || u.role?.role_code || 'User' }}</span>
@@ -479,7 +481,7 @@ onMounted(() => {
                   @click="toggleUserStatus(u)"
                   title="Click to toggle status"
                   :class="[
-                    'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition',
+                    'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold cursor-pointer transition',
                     (u.isActive !== undefined ? u.isActive : u.is_active !== false)
                       ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400 hover:bg-emerald-100'
                       : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400 hover:bg-rose-100'
@@ -494,21 +496,21 @@ onMounted(() => {
                   <button
                     type="button"
                     @click="openChangeRole(u)"
-                    class="px-2.5 py-1 text-[11px] font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                    class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
                   >
                     Change Role
                   </button>
                   <button
                     type="button"
                     @click="openResetPassword(u)"
-                    class="px-2.5 py-1 text-[11px] font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                    class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
                   >
                     Password
                   </button>
                   <button
                     type="button"
                     @click="openDetails(u)"
-                    class="px-2 py-1 text-[11px] font-semibold rounded text-slate-500 hover:text-slate-900 dark:hover:text-white transition"
+                    class="px-2 py-1 text-xs font-semibold rounded text-slate-500 hover:text-slate-900 dark:hover:text-white transition"
                     title="View Account Details"
                   >
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -519,7 +521,7 @@ onMounted(() => {
                   <button
                     type="button"
                     @click="openDeleteUser(u)"
-                    class="px-2 py-1 text-[11px] font-semibold rounded text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 transition"
+                    class="px-2 py-1 text-xs font-semibold rounded text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 transition"
                     title="Delete Account"
                   >
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -598,6 +600,7 @@ onMounted(() => {
             <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Assign Role *</label>
             <select
               v-model="newUserForm.roleId"
+              aria-label="Assign role"
               class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option disabled value="">Select an assigned role</option>
@@ -672,9 +675,9 @@ onMounted(() => {
         <div class="text-xs space-y-3">
           <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
             <p class="font-bold text-slate-900 dark:text-white">{{ selectedUser?.fullName || selectedUser?.full_name }}</p>
-            <p class="text-[11px] text-slate-400">@{{ selectedUser?.username }} • {{ selectedUser?.email }}</p>
+            <p class="text-xs text-slate-400">@{{ selectedUser?.username }} • {{ selectedUser?.email }}</p>
             <div class="mt-2 flex items-center gap-2">
-              <span class="text-[11px] text-slate-500">Current Role:</span>
+              <span class="text-xs text-slate-500">Current Role:</span>
               <span class="font-bold text-indigo-600 dark:text-indigo-400">
                 {{ formatRoleName(selectedUser?.role) }}
               </span>
@@ -685,6 +688,7 @@ onMounted(() => {
             <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">New Role Assignment *</label>
             <select
               v-model="changeRoleForm.newRoleId"
+              aria-label="New role"
               class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option disabled value="">Choose target role</option>
@@ -698,7 +702,7 @@ onMounted(() => {
             </select>
           </div>
 
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+          <p class="text-xs text-slate-500 dark:text-slate-400">
             Reassigning a user's role updates their permission matrix across the platform in real time.
           </p>
         </div>
@@ -797,7 +801,7 @@ onMounted(() => {
           <div class="p-3 rounded-lg bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-rose-900 dark:text-rose-200 font-semibold">
             {{ selectedUser?.fullName || selectedUser?.full_name }} (@{{ selectedUser?.username }})
           </div>
-          <p class="text-[11px] text-slate-500">
+          <p class="text-xs text-slate-500">
             This action deletes authentication credentials and removes all profile mappings in Supabase. This action cannot be undone.
           </p>
         </div>
@@ -847,30 +851,30 @@ onMounted(() => {
 
           <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
             <div>
-              <p class="text-[10px] text-slate-400 font-semibold uppercase">Email Address</p>
+              <p class="text-xs text-slate-400 font-semibold uppercase">Email Address</p>
               <p class="font-mono text-slate-800 dark:text-slate-200 mt-0.5">{{ selectedUser?.email }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-400 font-semibold uppercase">Role Tier</p>
+              <p class="text-xs text-slate-400 font-semibold uppercase">Role Tier</p>
               <p class="font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">{{ formatRoleName(selectedUser?.role) }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-400 font-semibold uppercase">Position</p>
+              <p class="text-xs text-slate-400 font-semibold uppercase">Position</p>
               <p class="text-slate-800 dark:text-slate-200 mt-0.5">{{ selectedUser?.position || '—' }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-400 font-semibold uppercase">Contact Number</p>
+              <p class="text-xs text-slate-400 font-semibold uppercase">Contact Number</p>
               <p class="font-mono text-slate-800 dark:text-slate-200 mt-0.5">{{ selectedUser?.contactNumber || selectedUser?.contact_number || '—' }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-400 font-semibold uppercase">Status</p>
+              <p class="text-xs text-slate-400 font-semibold uppercase">Status</p>
               <p class="font-bold mt-0.5" :class="(selectedUser?.isActive !== undefined ? selectedUser?.isActive : selectedUser?.is_active !== false) ? 'text-emerald-600' : 'text-slate-500'">
                 {{ (selectedUser?.isActive !== undefined ? selectedUser?.isActive : selectedUser?.is_active !== false) ? 'Active' : 'Inactive' }}
               </p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-400 font-semibold uppercase">Account ID</p>
-              <p class="font-mono text-[10px] text-slate-500 truncate mt-0.5" :title="selectedUser?.userId || selectedUser?.user_id">
+              <p class="text-xs text-slate-400 font-semibold uppercase">Account ID</p>
+              <p class="font-mono text-xs text-slate-500 truncate mt-0.5" :title="selectedUser?.userId || selectedUser?.user_id">
                 {{ selectedUser?.userId || selectedUser?.user_id }}
               </p>
             </div>

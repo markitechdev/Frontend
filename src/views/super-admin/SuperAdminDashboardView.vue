@@ -164,7 +164,7 @@ onMounted(() => {
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
       <div>
         <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
+          <span class="text-xs font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
             System Administration
           </span>
         </div>
@@ -228,26 +228,26 @@ onMounted(() => {
     <!-- Summary banner -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-slate-900 text-white shadow-md">
       <div class="px-3 py-2 border-r border-slate-800 last:border-0">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">System Status</span>
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">System Status</span>
         <p class="text-base font-bold text-emerald-400 flex items-center gap-1.5 mt-0.5">
           <span class="w-2 h-2 rounded-full bg-emerald-500" />
           {{ platformStatusDisplay }}
         </p>
       </div>
       <div class="px-3 py-2 border-r border-slate-800 last:border-0">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">User Accounts</span>
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">User Accounts</span>
         <p class="text-base font-bold text-white mt-0.5">
           {{ num(totalUsersCount) }}
         </p>
       </div>
       <div class="px-3 py-2 border-r border-slate-800 last:border-0">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Roles</span>
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Roles</span>
         <p class="text-base font-bold text-white mt-0.5">
           {{ num(totalRolesCount) }}
         </p>
       </div>
       <div class="px-3 py-2">
-        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Audit Records</span>
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Audit Records</span>
         <p class="text-base font-bold text-indigo-300 mt-0.5">
           {{ totalAuditLogsCount !== null && totalAuditLogsCount !== undefined ? `${num(totalAuditLogsCount)} records` : '--' }}
         </p>
@@ -522,7 +522,7 @@ onMounted(() => {
                 <td class="py-2.5">
                   <span
                     :class="[
-                      'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
+                      'px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider',
                       mov.direction === 'in' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' :
                       mov.direction === 'out' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300' :
                       'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300'

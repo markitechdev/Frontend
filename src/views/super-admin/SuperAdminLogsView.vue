@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { superAdminApi } from '@/api';
-import TableSkeleton from '@/components/ui/TableSkeleton.vue';
 import { ACTION_LABELS, ENTITY_LABELS, actionLabel, entityLabel, actionTone, detailsSummary } from '@/utils/auditLabels';
 
 const logs = ref([]);
@@ -120,7 +119,7 @@ onMounted(fetchLogs);
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
       <div>
         <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
+          <span class="text-xs font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
             Organization & Security
           </span>
         </div>
@@ -179,6 +178,7 @@ onMounted(fetchLogs);
               @keyup.enter="onFilterChange"
               type="search"
               placeholder="Search by name or keyword"
+              aria-label="Search audit records"
               class="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -189,6 +189,7 @@ onMounted(fetchLogs);
           <!-- Action Dropdown -->
           <select
             v-model="selectedAction"
+            aria-label="Filter by action"
             @change="onFilterChange"
             class="w-full sm:w-auto text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
@@ -200,6 +201,7 @@ onMounted(fetchLogs);
           <!-- Entity Dropdown -->
           <select
             v-model="selectedEntity"
+            aria-label="Filter by record type"
             @change="onFilterChange"
             class="w-full sm:w-auto text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
@@ -209,22 +211,22 @@ onMounted(fetchLogs);
           </select>
         </div>
 
-        <div class="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div class="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 tabular-nums min-w-[6rem] md:text-right md:justify-end">
           <span>{{ loading ? 'Loading…' : `${totalRecords.toLocaleString()} record${totalRecords === 1 ? '' : 's'}` }}</span>
         </div>
       </div>
 
-      <TableSkeleton v-if="loading" :rows="6" :cols="6" class="p-4" />
-
-      <div v-else-if="!logs.length" class="py-16 text-center text-slate-400 text-xs">
+      <div v-if="!loading && !logs.length" class="py-16 text-center text-slate-400 text-xs">
         <p class="font-semibold text-sm">No audit records found</p>
         <p class="mt-1">Try clearing or adjusting search filters.</p>
       </div>
 
-      <!-- Logs Table -->
-      <div v-else class="overflow-x-auto">
+      <!-- Logs Table (`relative` keeps the hidden "Details" header label inside the scroll
+           area; while loading, the same table shows placeholder rows of the
+           same height, so nothing jumps when the records arrive) -->
+      <div v-else class="relative overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-[11px]">
+          <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider text-xs">
             <tr>
               <th class="py-3 px-4 font-semibold">Date / Time</th>
               <th class="py-3 px-4 font-semibold">User</th>
@@ -234,7 +236,14 @@ onMounted(fetchLogs);
               <th class="py-3 px-4 font-semibold text-right"><span class="sr-only">Details</span></th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody v-if="loading" class="divide-y divide-slate-100 dark:divide-slate-800" aria-busy="true">
+            <tr v-for="r in pageSize" :key="`skel-${r}`" class="h-[57px]">
+              <td v-for="(w, c) in [150, 130, 110, 120, 180, 58]" :key="c" class="px-4">
+                <div class="h-3 rounded bg-slate-200/80 dark:bg-slate-700/70 animate-pulse" :style="{ width: `${w}px` }" />
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-else class="divide-y divide-slate-100 dark:divide-slate-800">
             <tr
               v-for="log in logs"
               :key="log.logId || log.log_id || log.id"
@@ -251,7 +260,7 @@ onMounted(fetchLogs);
                     <p class="font-semibold text-slate-900 dark:text-white leading-tight whitespace-nowrap">
                       {{ log.actor?.fullName || log.user?.full_name || log.user?.username || 'System' }}
                     </p>
-                    <p class="text-[10px] text-slate-400">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
                       {{ log.actor?.roleName || log.actor?.roleCode || 'System' }}
                     </p>
                   </div>
@@ -260,19 +269,19 @@ onMounted(fetchLogs);
 
               <td class="py-3 px-4">
                 <span
-                  :class="['inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border whitespace-nowrap', getActionColor(log.action)]"
+                  :class="['inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border whitespace-nowrap', getActionColor(log.action)]"
                   :title="log.action"
                 >
                   {{ actionLabel(log.action) }}
                 </span>
               </td>
 
-              <td class="py-3 px-4 text-[11px] text-slate-600 dark:text-slate-400 whitespace-nowrap">
+              <td class="py-3 px-4 text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">
                 <span class="font-semibold text-slate-800 dark:text-slate-200">{{ entityLabel(log.entityType || log.entity_type) }}</span>
                 <span v-if="log.entityId || log.entity_id" class="font-mono text-slate-400 ml-1">#{{ String(log.entityId || log.entity_id).slice(0, 8) }}</span>
               </td>
 
-              <td class="py-3 px-4 max-w-xs truncate text-slate-600 dark:text-slate-400 text-[11px]" :title="detailsSummary(log.details)">
+              <td class="py-3 px-4 max-w-xs truncate text-slate-600 dark:text-slate-400 text-xs" :title="detailsSummary(log.details)">
                 {{ detailsSummary(log.details) || '—' }}
               </td>
 
@@ -280,7 +289,7 @@ onMounted(fetchLogs);
                 <button
                   type="button"
                   @click="openDetails(log)"
-                  class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -295,7 +304,7 @@ onMounted(fetchLogs);
       </div>
 
       <!-- Pagination Footer -->
-      <div class="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500">
+      <div class="p-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
         <div>
           Page <span class="font-bold text-slate-700 dark:text-slate-300">{{ currentPage }}</span> of <span class="font-bold text-slate-700 dark:text-slate-300">{{ totalPages }}</span>
         </div>
@@ -304,7 +313,7 @@ onMounted(fetchLogs);
             type="button"
             @click="prevPage"
             :disabled="currentPage <= 1 || loading"
-            class="px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+            class="px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition"
           >
             Previous
           </button>
@@ -312,7 +321,7 @@ onMounted(fetchLogs);
             type="button"
             @click="nextPage"
             :disabled="currentPage >= totalPages || loading"
-            class="px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+            class="px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-800 transition"
           >
             Next
           </button>
@@ -337,23 +346,23 @@ onMounted(fetchLogs);
         <div class="text-xs space-y-3">
           <div class="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
             <div>
-              <p class="text-[10px] text-slate-400 font-semibold uppercase">Action</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Action</p>
               <p class="font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">{{ actionLabel(selectedLog?.action) }}</p>
-              <p class="font-mono text-[10px] text-slate-400">{{ selectedLog?.action }}</p>
+              <p class="font-mono text-xs text-slate-500 dark:text-slate-400">{{ selectedLog?.action }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-400 font-semibold uppercase">Date and time</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Date and time</p>
               <p class="font-mono text-slate-700 dark:text-slate-300 mt-0.5">{{ when(selectedLog?.createdAt || selectedLog?.created_at) }}</p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-400 font-semibold uppercase">User</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">User</p>
               <p class="font-semibold text-slate-900 dark:text-white mt-0.5">
                 {{ selectedLog?.actor?.fullName || selectedLog?.user?.full_name || 'System' }}
                 <span class="text-slate-400 font-normal">({{ selectedLog?.actor?.roleName || 'System' }})</span>
               </p>
             </div>
             <div>
-              <p class="text-[10px] text-slate-400 font-semibold uppercase">Record</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase">Record</p>
               <p class="font-mono text-slate-700 dark:text-slate-300 mt-0.5">
                 {{ entityLabel(selectedLog?.entityType || selectedLog?.entity_type) }} (ID: {{ selectedLog?.entityId || selectedLog?.entity_id || 'N/A' }})
               </p>
@@ -361,10 +370,10 @@ onMounted(fetchLogs);
           </div>
 
           <div>
-            <p class="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">
+            <p class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wide">
               Recorded details
             </p>
-            <pre class="p-3 rounded-xl bg-slate-950 text-emerald-400 font-mono text-[11px] overflow-x-auto max-h-60 border border-slate-800 leading-relaxed">{{ JSON.stringify(selectedLog?.details || {}, null, 2) }}</pre>
+            <pre class="p-3 rounded-xl bg-slate-950 text-emerald-400 font-mono text-xs overflow-x-auto max-h-60 border border-slate-800 leading-relaxed">{{ JSON.stringify(selectedLog?.details || {}, null, 2) }}</pre>
           </div>
         </div>
 

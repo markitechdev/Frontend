@@ -40,7 +40,7 @@ const submit = async ({ email, password }) => {
     variant="admin"
     eyebrow="System Administration"
     heading="Administration of users, roles and system records."
-    description="This area is limited to system administrators of the Inventory Management System."
+    description="This area is limited to system administrators of Walang Brownout Appliances."
     :points="points"
   >
     <div class="mb-8">

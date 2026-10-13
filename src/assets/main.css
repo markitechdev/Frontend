@@ -6,6 +6,10 @@
    inside their card instead of widening the whole page on phones. */
 .grid > * { min-width: 0; }
 
+/* Scroll areas are positioning contexts, so hidden (absolutely placed) helper
+   text inside a wide table can't escape them and make the page scroll sideways. */
+.overflow-x-auto, .overflow-auto { position: relative; }
+
 /* ---------------------------------------------------------------- motion
    Every animation here only changes `transform` and `opacity`, which the
    browser hands to the GPU, so it costs no main-thread time. Content that is

@@ -103,7 +103,7 @@ onBeforeUnmount(() => {
             <span class="text-xs font-semibold text-slate-900 dark:text-slate-100 leading-tight">
               {{ auth.user?.fullName || auth.user?.name || 'Super Admin' }}
             </span>
-            <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
               Super Admin
             </span>
           </div>
@@ -130,7 +130,7 @@ onBeforeUnmount(() => {
             <p class="text-slate-500 dark:text-slate-400 truncate mt-0.5">
               {{ auth.user?.email || 'admin@platform.local' }}
             </p>
-            <div class="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
+            <div class="mt-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold tracking-wide uppercase bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
               SUPER ADMIN
             </div>
           </div>

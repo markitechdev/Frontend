@@ -29,7 +29,7 @@ onMounted(fetchTenants);
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
       <div>
         <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
+          <span class="text-xs font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
             Organization & Security
           </span>
         </div>
@@ -84,7 +84,7 @@ onMounted(fetchTenants);
       <div v-if="!tenants.length" class="py-16 text-center text-slate-400 text-xs">No organization details available.</div>
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 border-b border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800">
             <tr>
               <th class="py-3 px-4 font-semibold">Organization</th>
               <th class="py-3 px-4 font-semibold">ID</th>
@@ -107,7 +107,7 @@ onMounted(fetchTenants);
                 {{ t.tenantId }}
               </td>
               <td class="py-3 px-4">
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
                   {{ t.plan }}
                 </span>
               </td>
@@ -116,7 +116,7 @@ onMounted(fetchTenants);
               </td>
               <td class="py-3 px-4 text-right tabular-nums text-slate-700 dark:text-slate-300">{{ t.totalProducts ?? '—' }}</td>
               <td class="py-3 px-4 text-right">
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   {{ t.status }}
                 </span>

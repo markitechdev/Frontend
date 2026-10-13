@@ -326,7 +326,7 @@ onMounted(fetchData);
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
       <div>
         <div class="flex items-center gap-2">
-          <span class="text-[11px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
+          <span class="text-xs font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase">
             Administration
           </span>
         </div>
@@ -404,13 +404,13 @@ onMounted(fetchData);
             <div class="flex items-center gap-1.5">
               <span
                 v-if="role.isSystem"
-                class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                class="px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
               >
                 System
               </span>
               <span
                 :class="[
-                  'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider',
+                  'px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider',
                   role.roleCode === 'super_admin'
                     ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
                     : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300'
@@ -424,12 +424,12 @@ onMounted(fetchData);
           <!-- Role Details -->
           <div class="mt-3">
             <div class="flex items-center justify-between">
-              <h3 class="text-base font-bold text-slate-900 dark:text-white">
+              <h2 class="text-base font-bold text-slate-900 dark:text-white">
                 {{ role.roleName || role.role_name }}
-              </h3>
+              </h2>
               <span
                 :class="[
-                  'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold',
+                  'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold',
                   role.isActive !== false
                     ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
                     : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
@@ -463,13 +463,13 @@ onMounted(fetchData);
             <span
               v-for="p in (role.permissions || []).slice(0, 8)"
               :key="p.permission_id || p.id"
-              class="text-[9px] font-mono bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded px-1.5 py-0.5"
+              class="text-xs font-mono bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded px-1.5 py-0.5"
             >
               {{ p.permission_code || p.code }}
             </span>
             <span
               v-if="(role.permissions || []).length > 8"
-              class="text-[9px] font-semibold text-slate-400 px-1 py-0.5"
+              class="text-xs font-semibold text-slate-400 px-1 py-0.5"
             >
               +{{ role.permissions.length - 8 }} more
             </span>
@@ -491,7 +491,7 @@ onMounted(fetchData);
               v-if="!role.isSystem"
               type="button"
               @click="toggleRoleStatus(role)"
-              class="px-2 py-1 rounded text-[11px] font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition"
+              class="px-2 py-1 rounded text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition"
             >
               {{ role.isActive !== false ? 'Deactivate' : 'Activate' }}
             </button>
@@ -500,7 +500,7 @@ onMounted(fetchData);
               v-if="!role.isSystem"
               type="button"
               @click="confirmDeleteRole(role)"
-              class="px-2 py-1 rounded text-[11px] font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+              class="px-2 py-1 rounded text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
             >
               Delete
             </button>
@@ -582,7 +582,7 @@ onMounted(fetchData);
               <p class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Grant Authoritative Permissions
               </p>
-              <p class="text-[11px] text-slate-500">
+              <p class="text-xs text-slate-500">
                 {{ createForm.permissionIds.size }} of {{ permissions.length }} capabilities selected
               </p>
             </div>
@@ -601,7 +601,7 @@ onMounted(fetchData);
                 <button
                   type="button"
                   @click="toggleCreateModule(modKey)"
-                  class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                  class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
                 >
                   {{ isCreateModuleAllSelected(modKey) ? 'Deselect All' : 'Select All' }}
                 </button>
@@ -623,7 +623,7 @@ onMounted(fetchData);
                     <span class="font-mono font-medium text-slate-800 dark:text-slate-200 block">
                       {{ p.permission_code }}
                     </span>
-                    <span class="text-[11px] text-slate-500 dark:text-slate-400 block">
+                    <span class="text-xs text-slate-500 dark:text-slate-400 block">
                       {{ p.description }}
                     </span>
                   </div>
@@ -675,8 +675,9 @@ onMounted(fetchData);
           </div>
 
           <div>
-            <label class="label">Active State</label>
+            <label class="label" for="role-active-state">Active State</label>
             <select
+              id="role-active-state"
               v-model="editForm.isActive"
               class="select"
               :disabled="activeRole?.isSystem"
@@ -728,7 +729,7 @@ onMounted(fetchData);
               <p class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
                 Grant Authoritative Permissions
               </p>
-              <p class="text-[11px] text-slate-500">
+              <p class="text-xs text-slate-500">
                 {{ activeRole?.roleCode === 'super_admin' ? 'Full access (all permissions)' : `${editForm.permissionIds.size} of ${permissions.length} selected` }}
               </p>
             </div>
@@ -751,7 +752,7 @@ onMounted(fetchData);
                 <button
                   type="button"
                   @click="toggleEditModule(modKey)"
-                  class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                  class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
                 >
                   {{ isEditModuleAllSelected(modKey) ? 'Deselect All' : 'Select All' }}
                 </button>
@@ -773,7 +774,7 @@ onMounted(fetchData);
                     <span class="font-mono font-medium text-slate-800 dark:text-slate-200 block">
                       {{ p.permission_code }}
                     </span>
-                    <span class="text-[11px] text-slate-500 dark:text-slate-400 block">
+                    <span class="text-xs text-slate-500 dark:text-slate-400 block">
                       {{ p.description }}
                     </span>
                   </div>
@@ -819,7 +820,7 @@ onMounted(fetchData);
       </div>
       <div v-else class="max-h-80 overflow-y-auto">
         <table class="w-full text-left text-xs">
-          <thead class="text-slate-400 border-b border-slate-100 dark:border-slate-800">
+          <thead class="text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
             <tr>
               <th class="py-2 font-semibold">User</th>
               <th class="py-2 font-semibold">Username</th>
@@ -831,7 +832,7 @@ onMounted(fetchData);
             <tr v-for="u in usersList" :key="u.userId" class="py-2">
               <td class="py-2 font-medium text-slate-900 dark:text-white">
                 {{ u.fullName }}
-                <span class="block text-[11px] text-slate-400 font-normal">{{ u.email }}</span>
+                <span class="block text-xs text-slate-400 font-normal">{{ u.email }}</span>
               </td>
               <td class="py-2 font-mono text-slate-500 dark:text-slate-400">@{{ u.username }}</td>
               <td class="py-2 text-slate-500">{{ u.position || '—' }}</td>
