@@ -1,4 +1,5 @@
 <script setup>
+import AppLogo from '@/components/brand/AppLogo.vue';
 /**
  * Shared, formal two-panel layout for the sign-in pages.
  * Left: organisation panel (desktop only). Right: the form passed in the default slot.
@@ -26,16 +27,14 @@ const year = new Date().getFullYear();
       <!-- subtle grid texture -->
       <div class="absolute inset-0 opacity-[0.06] pointer-events-none auth-grid" aria-hidden="true" />
 
-      <div class="relative flex items-center gap-3">
-        <div class="h-10 w-10 rounded-lg bg-white/10 ring-1 ring-white/20 grid place-items-center" aria-hidden="true">
-          <svg class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" /><path d="m3 8 9 5 9-5" /><path d="M12 13v8" />
-          </svg>
-        </div>
-        <div class="leading-tight">
-          <p class="text-[15px] font-semibold tracking-tight">Inventory Management System</p>
-          <p class="text-xs text-white/60">{{ variant === 'admin' ? 'System Administration' : 'Stock Monitoring and Control' }}</p>
-        </div>
+      <div class="relative">
+        <AppLogo
+          :size="48"
+          animate
+          with-text
+          tone="light"
+          :subtitle="variant === 'admin' ? 'System Administration' : 'Inventory Management System'"
+        />
       </div>
 
       <div class="relative max-w-md">
@@ -67,17 +66,14 @@ const year = new Date().getFullYear();
       <div class="flex-1 flex items-center justify-center px-6 py-12 sm:px-12">
         <div class="w-full max-w-[400px]">
           <!-- compact brand for phones / tablets -->
-          <div class="lg:hidden flex items-center gap-3 mb-10">
-            <div class="h-10 w-10 rounded-lg grid place-items-center text-white"
-                 :class="variant === 'admin' ? 'bg-slate-900' : 'bg-navy-900'" aria-hidden="true">
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" /><path d="m3 8 9 5 9-5" /><path d="M12 13v8" />
-              </svg>
-            </div>
-            <div class="leading-tight">
-              <p class="text-[15px] font-semibold text-slate-900">Inventory Management System</p>
-              <p class="text-xs text-slate-500">{{ variant === 'admin' ? 'System Administration' : 'Stock Monitoring and Control' }}</p>
-            </div>
+          <div class="lg:hidden mb-10">
+            <AppLogo
+              :size="44"
+              animate
+              with-text
+              tone="dark"
+              :subtitle="variant === 'admin' ? 'System Administration' : 'Inventory Management System'"
+            />
           </div>
 
           <slot />

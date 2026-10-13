@@ -1,4 +1,5 @@
 <script setup>
+import AppLogo from '@/components/brand/AppLogo.vue';
 import { computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -127,9 +128,7 @@ onBeforeUnmount(() => {
           to="/super-admin/dashboard"
           class="flex items-center gap-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg p-1"
         >
-          <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-950" aria-hidden="true">
-            <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" /><path d="m3 8 9 5 9-5" /><path d="M12 13v8" /></svg>
-          </div>
+          <AppLogo :size="34" />
           <div class="flex flex-col">
             <span class="text-sm font-bold tracking-tight text-white leading-tight">
               IMS Administration

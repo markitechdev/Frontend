@@ -1,4 +1,5 @@
 <script setup>
+import AppLogo from '@/components/brand/AppLogo.vue';
 import { computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
@@ -138,18 +139,14 @@ onBeforeUnmount(() => {
     <!-- Brand Header -->
     <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800/80 shrink-0 bg-[#0C1420]">
       <RouterLink to="/dashboard" class="flex items-center gap-2.5 min-w-0" @click="emit('close')">
-        <div class="h-9 w-9 rounded-xl bg-sky-500 text-slate-950 grid place-items-center text-xs font-black shadow-md shadow-sky-950/50 shrink-0">
-          📦
-        </div>
+        <AppLogo :size="34" />
         <div class="min-w-0">
-          <p class="text-xs font-black tracking-tight text-white leading-tight uppercase">
-            IMS INVENTORY
+          <p class="text-sm font-bold tracking-[0.15em] text-white leading-tight">
+            IMS
           </p>
-          <div class="flex items-center gap-1.5 mt-0.5">
-            <span class="text-[9px] font-bold text-sky-400 uppercase tracking-wider truncate">
-              Operations Command
-            </span>
-          </div>
+          <p class="text-[10px] font-semibold text-sky-400 tracking-wide truncate mt-0.5">
+            Inventory Management
+          </p>
         </div>
       </RouterLink>
 
