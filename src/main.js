@@ -5,6 +5,7 @@ import router from './router';
 import { useAuthStore } from './stores/auth';
 import { useToastStore } from './stores/toast';
 import { setUnauthorizedHandler, setForbiddenHandler } from './api/client';
+import '@fontsource-variable/inter/wght.css';
 import './assets/main.css';
 
 const app = createApp(App);
@@ -65,12 +66,13 @@ app.mount('#app');
 const splash = document.getElementById('ims-splash');
 if (splash) {
   const info = window.__imsSplash || { start: Date.now(), full: false };
-  const minVisible = info.full ? 1700 : 0;
+  // No artificial minimum: the screen covers real loading time only.
+  const minVisible = 0;
   router.isReady().catch(() => {}).finally(() => {
     const wait = Math.max(0, minVisible - (Date.now() - info.start));
     setTimeout(() => {
       splash.classList.add('ims-splash--out');
-      setTimeout(() => splash.remove(), 400);
+      setTimeout(() => splash.remove(), 250);
     }, wait);
   });
 }

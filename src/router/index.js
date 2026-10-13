@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { safeRedirect } from '@/utils/permissions';
-import { setActiveContext, contextForPath } from '@/api/session';
+import { setActiveContext, contextForPath, getSession } from '@/api/session';
 
 /**
  * Route metadata specifications:
@@ -187,6 +187,52 @@ const routes = [
   },
 ];
 
+/** Begins loading a route's lazy page component and its layout (no waiting). */
+const prefetched = new Set();
+const prefetchRoute = (to) => {
+  const loaders = to.matched
+    .map((r) => r.components?.default)
+    .filter((c) => typeof c === 'function');
+  if (!to.meta.public && to.meta.layout !== 'blank' && to.meta.layout !== 'auto') {
+    loaders.push(isSuperAdminPath(to.path)
+      ? () => import('@/components/layout/SuperAdminLayout.vue')
+      : () => import('@/components/layout/AppLayout.vue'));
+  }
+  for (const load of loaders) {
+    if (prefetched.has(load)) continue;
+    prefetched.add(load);
+    try { Promise.resolve(load()).catch(() => prefetched.delete(load)); } catch { prefetched.delete(load); }
+  }
+};
+const isSuperAdminPath = (path) => path.startsWith('/super-admin');
+
+/** Confirms the saved session with the server without holding up the page. */
+let backgroundCheck = null;
+const verifyInBackground = () => {
+  if (backgroundCheck) return;
+  const auth = useAuthStore();
+  backgroundCheck = auth.ensureVerified()
+    .then(() => {
+      const current = router.currentRoute.value;
+      if (!current.matched.length || current.meta.public) return;
+      if (!auth.token) {
+        // The server rejected the saved session: back to that side's sign-in.
+        router.replace({
+          name: isSuperAdminPath(current.path) ? 'super-admin-login' : 'login',
+          query: { redirect: current.fullPath, expired: 'true' },
+        });
+        return;
+      }
+      // Permissions may have changed since sign-in.
+      const { permission, anyOf } = current.meta;
+      if ((permission && !auth.can(permission)) || (anyOf && !auth.canAny(...anyOf))) {
+        router.replace({ name: 'forbidden', query: { from: current.fullPath } });
+      }
+    })
+    .catch(() => {})
+    .finally(() => { backgroundCheck = null; });
+};
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
@@ -210,12 +256,25 @@ router.beforeEach(async (to) => {
   // Page Not Found ('auto' layout) stay on the side the user came from.
   if (to.meta.layout !== 'auto') setActiveContext(contextForPath(to.path));
 
-  // Verify the stored session/permissions with the server once per page load,
-  // so guards below never decide on stale or tampered localStorage data.
+  // Start downloading the page and its layout now, in parallel with the
+  // session check below, instead of after it.
+  prefetchRoute(to);
+
+  // Verify the stored session/permissions with the server once per page load.
+  // While the saved session is still valid the page is shown straight away and
+  // the check runs in the background (the API checks every request anyway); a
+  // rejected session or a lost permission then moves the user on. Otherwise the
+  // check is awaited so the guards below decide on server data.
   let sessionEnded = false;
   if (auth.token && !auth.verified) {
-    await auth.ensureVerified();
-    sessionEnded = !auth.token; // the stored session was rejected by the server
+    const { expiresAt } = getSession();
+    const stillValid = Boolean(expiresAt) && expiresAt - Date.now() > 60_000;
+    if (stillValid && !to.meta.public) {
+      verifyInBackground();
+    } else {
+      await auth.ensureVerified();
+      sessionEnded = !auth.token; // the stored session was rejected by the server
+    }
   }
 
   // 1. Handling Public Routes

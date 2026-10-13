@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 import { useRoute } from 'vue-router';
-import AppLayout from '@/components/layout/AppLayout.vue';
-import SuperAdminLayout from '@/components/layout/SuperAdminLayout.vue';
+// Loaded on demand, so the sign-in pages don't download the app shells.
+const AppLayout = defineAsyncComponent(() => import('@/components/layout/AppLayout.vue'));
+const SuperAdminLayout = defineAsyncComponent(() => import('@/components/layout/SuperAdminLayout.vue'));
 import ToastHost from '@/components/ui/ToastHost.vue';
 import { useAuthStore } from '@/stores/auth';
 
