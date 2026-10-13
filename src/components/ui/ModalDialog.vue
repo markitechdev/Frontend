@@ -27,8 +27,8 @@ onBeforeUnmount(() => {
 <template>
   <Teleport to="body">
     <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
-      <div class="fixed inset-0 bg-slate-900/50" @click="emit('close')" />
-      <div :class="['relative w-full bg-white rounded-xl shadow-xl my-8', sizes[size] || sizes.md]"
+      <div class="anim-fade fixed inset-0 bg-slate-900/50" @click="emit('close')" />
+      <div :class="['anim-pop relative w-full bg-white rounded-xl shadow-xl my-8', sizes[size] || sizes.md]"
            role="dialog" aria-modal="true">
         <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
           <h3 class="text-base font-semibold text-slate-900">{{ title }}</h3>

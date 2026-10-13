@@ -189,10 +189,10 @@ onBeforeUnmount(() => {
                 'group flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150',
                 isItemActive(item.to)
                   ? 'bg-sky-500/10 text-sky-300 font-semibold border-l-2 border-sky-400 shadow-sm'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/70'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/70 hover:translate-x-1'
               ]"
             >
-              <span class="text-sm shrink-0 select-none opacity-80 group-hover:opacity-100">{{ item.icon }}</span>
+              <span class="text-sm shrink-0 select-none opacity-80 group-hover:opacity-100 transition-transform duration-200 group-hover:scale-110">{{ item.icon }}</span>
               <span class="flex-1 truncate">{{ item.label }}</span>
               <span
                 v-if="isItemActive(item.to)"

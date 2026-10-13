@@ -120,9 +120,9 @@ const summary = computed(() => rows.value
                 aria-hidden="true"
               />
               <div
-                class="absolute left-0 top-0 h-full rounded-r transition-[width] duration-500 ease-out"
-                :class="[d.isOther ? 'bg-slate-400' : 'bg-navy-700', hovered === i ? 'brightness-125' : '']"
-                :style="{ width: widthPct(d.value) }"
+                class="grow-x absolute left-0 top-0 h-full rounded-r transition-[width] duration-500 ease-out"
+                :class="[d.isOther ? 'bg-slate-400' : 'bg-gradient-to-r from-navy-800 to-navy-600', hovered === i ? 'brightness-125' : '']"
+                :style="{ width: widthPct(d.value), '--d': i }"
               />
             </div>
             <span class="w-20 sm:w-24 shrink-0 text-right text-xs tabular-nums font-semibold text-slate-800">

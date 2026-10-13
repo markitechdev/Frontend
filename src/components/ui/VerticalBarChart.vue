@@ -139,21 +139,22 @@ const summary = computed(() => rows.value
                 >
                   <!-- value on top -->
                   <span
-                    class="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold tabular-nums text-slate-700 dark:text-slate-200 transition-[bottom] duration-500 ease-out"
-                    :style="{ bottom: `calc(${pct(d.value)}% + 6px)` }"
+                    class="anim-fade absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold tabular-nums text-slate-700 dark:text-slate-200 transition-[bottom] duration-500 ease-out"
+                    :style="{ bottom: `calc(${pct(d.value)}% + 6px)`, '--d': i + 8 }"
                     aria-hidden="true"
                   >{{ compactValue(d.value) }}</span>
 
-                  <!-- column -->
-                  <div
-                    class="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/5 max-w-[72px] rounded-t-md transition-[height,opacity] duration-500 ease-out"
-                    :class="[
-                      d.isOther ? 'bg-slate-400 dark:bg-slate-500' : 'bg-navy-700 dark:bg-sky-500',
-                      hovered !== null && hovered !== i ? 'opacity-50' : 'opacity-100',
-                    ]"
-                    :style="{ height: `${pct(d.value)}%` }"
-                    aria-hidden="true"
-                  />
+                  <!-- column (centred by the wrapper, so the grow-in animation can use transform) -->
+                  <div class="absolute inset-0 flex items-end justify-center pointer-events-none" aria-hidden="true">
+                    <div
+                      class="grow-y w-3/5 max-w-[72px] rounded-t-md transition-[height,opacity] duration-500 ease-out"
+                      :class="[
+                        d.isOther ? 'bg-slate-400 dark:bg-slate-500' : 'bg-gradient-to-t from-navy-800 to-navy-600 dark:from-sky-600 dark:to-sky-400',
+                        hovered !== null && hovered !== i ? 'opacity-50' : 'opacity-100',
+                      ]"
+                      :style="{ height: `${pct(d.value)}%`, '--d': i }"
+                    />
+                  </div>
 
                   <!-- tooltip -->
                   <div

@@ -6,6 +6,66 @@
    inside their card instead of widening the whole page on phones. */
 .grid > * { min-width: 0; }
 
+/* ---------------------------------------------------------------- motion
+   Every animation here only changes `transform` and `opacity`, which the
+   browser hands to the GPU, so it costs no main-thread time. Content that is
+   part of the first paint is never hidden by an animation.
+   Delay per item: style="--d: 2" (steps of 70 ms). */
+.anim-rise { animation: ims-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; animation-delay: calc(var(--d, 0) * 70ms); }
+.anim-fade { animation: ims-fade 0.45s ease-out backwards; animation-delay: calc(var(--d, 0) * 70ms); }
+.anim-pop  { animation: ims-pop 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards; animation-delay: calc(var(--d, 0) * 70ms); }
+.anim-slide-left { animation: ims-slide-left 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.grow-x { transform-origin: left center; animation: ims-grow-x 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; animation-delay: calc(0.15s + var(--d, 0) * 70ms); }
+.grow-y { transform-origin: center bottom; animation: ims-grow-y 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; animation-delay: calc(0.1s + var(--d, 0) * 70ms); }
+
+/* cards lift a little on hover */
+.lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.lift:hover { transform: translateY(-3px); box-shadow: 0 12px 28px -12px rgb(15 23 42 / 0.28); }
+
+/* soft floating decoration */
+.float-slow { animation: ims-float 14s ease-in-out infinite alternate; }
+.float-slower { animation: ims-float 20s ease-in-out infinite alternate-reverse; }
+
+/* one-time light sweep across a surface */
+.sheen { position: relative; overflow: hidden; isolation: isolate; }
+.sheen::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%);
+  transform: translateX(-100%); animation: ims-sheen 1.6s ease-out 0.4s 1 both;
+}
+
+/* Extra motion for larger screens only (phones skip it to save main-thread
+   and graphics work on slower devices). */
+@media (min-width: 768px) {
+  .anim-fade-wide { animation: ims-fade 0.45s ease-out backwards; animation-delay: calc(var(--d, 0) * 70ms); }
+}
+@media (min-width: 1024px) {
+  .float-wide { animation: ims-float 14s ease-in-out infinite alternate; }
+  .float-wide-r { animation: ims-float 20s ease-in-out infinite alternate-reverse; }
+}
+
+/* page change (not the first load) */
+.page-in { animation: ims-page-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+
+@keyframes ims-rise { from { opacity: 0; transform: translate3d(0, 14px, 0); } to { opacity: 1; transform: none; } }
+@keyframes ims-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ims-pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+@keyframes ims-slide-left { from { opacity: 0; transform: translate3d(24px, 0, 0); } to { opacity: 1; transform: none; } }
+@keyframes ims-grow-x { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes ims-grow-y { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes ims-float { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(30px, -24px, 0) scale(1.08); } }
+@keyframes ims-sheen { to { transform: translateX(100%); } }
+@keyframes ims-page-in { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise, .anim-fade, .anim-pop, .anim-slide-left, .grow-x, .grow-y,
+  .float-slow, .float-slower, .float-wide, .float-wide-r, .anim-fade-wide, .page-in { animation: none !important; }
+  .sheen::after { display: none; }
+  .lift:hover { transform: none; }
+  .animate-pulse { animation: none; }
+  .btn { --tw-scale-x: 1; --tw-scale-y: 1; }
+}
+
 :root {
   --admin-bg: #F4F7FA;
   --admin-surface: #FFFFFF;

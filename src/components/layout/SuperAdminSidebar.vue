@@ -167,10 +167,10 @@ onBeforeUnmount(() => {
                   'group flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150',
                   isItemActive(item.to)
                     ? 'bg-indigo-600 text-white shadow-sm font-semibold'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/70'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/70 hover:translate-x-1'
                 ]"
               >
-                <span class="text-sm shrink-0 select-none opacity-85 group-hover:opacity-100">{{ item.icon }}</span>
+                <span class="text-sm shrink-0 select-none opacity-85 group-hover:opacity-100 transition-transform duration-200 group-hover:scale-110">{{ item.icon }}</span>
                 <span class="flex-1 truncate">{{ item.label }}</span>
                 <span
                   v-if="item.badge"
