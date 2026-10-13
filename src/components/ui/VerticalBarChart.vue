@@ -93,8 +93,8 @@ const summary = computed(() => rows.value
 
     <!-- empty -->
     <div v-else-if="!rows.length || total === 0" class="text-center py-8">
-      <p class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ emptyText }}</p>
-      <p class="text-xs text-slate-400 mt-1">Change the filters or add stock to see the distribution.</p>
+      <p class="text-sm font-medium text-slate-500 dark:text-slate-500">{{ emptyText }}</p>
+      <p class="text-xs text-slate-500 mt-1">Change the filters or add stock to see the distribution.</p>
     </div>
 
     <template v-else>
@@ -108,7 +108,7 @@ const summary = computed(() => rows.value
               <span
                 v-for="t in scale.ticks"
                 :key="t"
-                class="absolute right-2 translate-y-1/2 text-[10px] leading-none text-slate-400 tabular-nums"
+                class="absolute right-2 translate-y-1/2 text-[10px] leading-none text-slate-500 tabular-nums"
                 :style="{ bottom: `${(t / scale.max) * 100}%` }"
               >{{ compactValue(t) }}</span>
             </div>
@@ -178,7 +178,7 @@ const summary = computed(() => rows.value
               <p class="text-xs font-medium truncate"
                  :class="d.isOther ? 'text-slate-500 italic' : 'text-slate-700 dark:text-slate-200'"
                  :title="d.label">{{ d.label }}</p>
-              <p class="hidden sm:block text-[11px] text-slate-500 dark:text-slate-400 tabular-nums truncate">{{ formatValue(d.value) }}</p>
+              <p class="hidden sm:block text-[11px] text-slate-500 dark:text-slate-500 tabular-nums truncate">{{ formatValue(d.value) }}</p>
             </div>
           </div>
         </div>

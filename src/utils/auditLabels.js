@@ -56,6 +56,9 @@ export const ACTION_LABELS = {
   ALERT_RESOLVED: 'Alert resolved',
 
   generate_report: 'Report generated',
+
+  SALE_RECORDED: 'Sale recorded',
+  SALE_VOIDED: 'Sale voided',
 };
 
 export const ENTITY_LABELS = {
@@ -69,6 +72,7 @@ export const ENTITY_LABELS = {
   stock_movements: 'Stock movement',
   alerts: 'Alert',
   reports: 'Report',
+  sales: 'Sale',
 };
 
 const sentence = (code) => {
@@ -83,6 +87,8 @@ export const entityLabel = (code) => ENTITY_LABELS[code] || sentence(code);
 export const actionTone = (code) => {
   const c = String(code || '').toUpperCase();
   if (c.includes('DENIED')) return 'danger';
+  if (c === 'SALE_RECORDED') return 'success';
+  if (c === 'SALE_VOIDED') return 'warning';
   if (c.includes('DELETED') || c.includes('DEACTIVATED') || c.includes('DAMAGED') || c.includes('MISSING')) return 'danger';
   if (c.includes('CREATED') || c.includes('ACTIVATED') || c.includes('ADDED') || c.includes('RESOLVED') || c === 'STOCK_IN') return 'success';
   if (c.includes('ROLE_CHANGED') || c.includes('ASSIGNED') || c.includes('RESET') || c.includes('VARIANCE')) return 'warning';
@@ -95,6 +101,7 @@ const KEY_LABELS = {
   role: 'Role', roleCode: 'Role', roleName: 'Role', report: 'Report', endpoint: null, attempt: null,
   revoked: null, username: 'Username', fullName: 'Name', name: 'Name', product: 'Product', sku: 'SKU',
   movementType: 'Type', quantity: 'Quantity', status: 'Status', note: 'Note', reason: 'Reason',
+  referenceNo: 'Ref', customer: 'Customer', paymentMethod: 'Payment', total: 'Total', items: 'Items',
 };
 
 const valueText = (v) => {

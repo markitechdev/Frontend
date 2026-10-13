@@ -84,7 +84,7 @@ const summary = computed(() => rows.value
     <!-- empty -->
     <div v-else-if="!rows.length || total === 0" class="text-center py-8">
       <p class="text-sm font-medium text-slate-500">{{ emptyText }}</p>
-      <p class="text-xs text-slate-400 mt-1">Change the filters or add stock to see the distribution.</p>
+      <p class="text-xs text-slate-500 mt-1">Change the filters or add stock to see the distribution.</p>
     </div>
 
     <template v-else>
@@ -144,7 +144,7 @@ const summary = computed(() => rows.value
         </div>
 
         <!-- axis -->
-        <div class="relative h-5 mt-1 ml-0 sm:ml-36 mr-[5.5rem] sm:mr-[6.5rem] text-[10px] text-slate-400 tabular-nums" aria-hidden="true">
+        <div class="relative h-5 mt-1 ml-0 sm:ml-36 mr-[5.5rem] sm:mr-[6.5rem] text-[10px] text-slate-500 tabular-nums" aria-hidden="true">
           <span
             v-for="(t, i) in ticks"
             :key="i"

@@ -123,6 +123,15 @@ export const rolesApi = {
   remove:      (id) => api.delete(`/roles/${id}`).then(unwrap).then(mutate('roles')),
 };
 
+/** Sales & transactions (finance.view / finance.manage). */
+export const salesApi = {
+  list:    (params) => api.get('/sales', qs(params)).then(unwrapWithMeta),
+  get:     (id) => api.get(`/sales/${id}`).then(unwrap),
+  summary: (params) => api.get('/sales/summary', qs(params)).then(unwrap),
+  create:  (body) => api.post('/sales', body).then(unwrap),
+  void:    (id, body) => api.post(`/sales/${id}/void`, body || {}).then(unwrap),
+};
+
 export const logsApi = {
   list: (params) => api.get('/logs', qs(params)).then(unwrapWithMeta),
 };

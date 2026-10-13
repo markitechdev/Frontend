@@ -275,7 +275,7 @@ const exportCsv = () => {
       <div class="card lg:col-span-1 min-w-0">
         <div class="card-header">
           <h2 class="card-title">Shrinkage Summary</h2>
-          <span class="text-[11px] text-slate-400">{{ filters.from || filters.to ? 'Selected dates' : 'All time' }}</span>
+          <span class="text-[11px] text-slate-500">{{ filters.from || filters.to ? 'Selected dates' : 'All time' }}</span>
         </div>
         <div class="card-body space-y-3 text-sm">
           <template v-if="loadingShrink">
@@ -294,7 +294,7 @@ const exportCsv = () => {
               <span class="text-slate-700 font-medium">Estimated loss</span>
               <span class="font-bold text-red-600 tabular-nums">{{ peso(shrinkSummary?.totalShrinkageValue) }}</span>
             </div>
-            <p class="text-[11px] text-slate-400 pt-1">
+            <p class="text-[11px] text-slate-500 pt-1">
               From recorded damaged and missing movements (including cycle-count variances) at current unit price.
             </p>
           </template>
@@ -307,7 +307,7 @@ const exportCsv = () => {
           <h2 class="card-title">
             {{ { low_stock: 'Items Below Threshold', shrinkage: 'Shrinkage Events', category: 'Category Valuation' }[reportType] || 'Stock Overview' }}
           </h2>
-          <span class="text-xs text-slate-400">
+          <span class="text-xs text-slate-500">
             {{ (reportType === 'shrinkage' ? shrinkRows : reportType === 'category' ? byCategory : tableRows).length }} row(s)
           </span>
         </div>
@@ -319,10 +319,10 @@ const exportCsv = () => {
             </thead>
             <TableSkeleton v-if="loadingShrink" :columns="6" :rows="4" />
             <tbody v-else>
-              <tr v-if="!shrinkRows.length"><td colspan="6" class="text-center py-10 text-slate-400">No damaged or missing stock recorded for these filters.</td></tr>
+              <tr v-if="!shrinkRows.length"><td colspan="6" class="text-center py-10 text-slate-500">No damaged or missing stock recorded for these filters.</td></tr>
               <tr v-for="r in shrinkRows" :key="r.movementId">
                 <td class="text-xs text-slate-500 whitespace-nowrap">{{ when(r.dateRecorded) }}</td>
-                <td><p class="font-medium text-slate-800">{{ r.productName }}</p><p class="font-mono text-[11px] text-slate-400">{{ r.sku }}</p></td>
+                <td><p class="font-medium text-slate-800">{{ r.productName }}</p><p class="font-mono text-[11px] text-slate-500">{{ r.sku }}</p></td>
                 <td><span :class="r.movementType === 'missing' ? 'badge-red' : 'badge-amber'">{{ r.movementType }}</span></td>
                 <td class="text-right tabular-nums">{{ r.quantity }}</td>
                 <td class="text-right tabular-nums font-semibold">{{ peso(r.shrinkageValue) }}</td>
@@ -338,7 +338,7 @@ const exportCsv = () => {
             </thead>
             <TableSkeleton v-if="loadingInventory" :columns="4" :rows="4" />
             <tbody v-else>
-              <tr v-if="!byCategory.length"><td colspan="4" class="text-center py-10 text-slate-400">Nothing to show.</td></tr>
+              <tr v-if="!byCategory.length"><td colspan="4" class="text-center py-10 text-slate-500">Nothing to show.</td></tr>
               <tr v-for="c in [...byCategory].sort((a, b) => b.value - a.value)" :key="c.label">
                 <td class="font-medium text-slate-800">{{ c.label }}</td>
                 <td class="text-right tabular-nums">{{ c.items }}</td>
@@ -357,7 +357,7 @@ const exportCsv = () => {
             <tbody v-else>
               <tr v-if="inventoryError"><td colspan="5" class="text-center py-10 text-red-600">{{ inventoryError }}</td></tr>
               <tr v-else-if="!tableRows.length">
-                <td colspan="5" class="text-center py-10 text-slate-400">
+                <td colspan="5" class="text-center py-10 text-slate-500">
                   {{ reportType === 'low_stock' ? 'Every product is above its reorder point.' : 'No products in this selection.' }}
                 </td>
               </tr>

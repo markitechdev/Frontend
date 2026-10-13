@@ -60,7 +60,13 @@ const SECTIONS = [
     heading: 'Analytics',
     items: [
       { to: '/reports', label: 'Reports & Analytics', icon: '📈', anyOf: ['reports.view', 'reports.generate'] },
-      { to: '/finance', label: 'Financial Valuation', icon: '💰', permission: 'finance.view', anyOf: ['reports.view', 'reports.generate'] },
+      { to: '/finance', label: 'Financial Reports', icon: '💰', permission: 'finance.view', anyOf: ['reports.view', 'reports.generate'] },
+    ],
+  },
+  {
+    heading: 'Sales',
+    items: [
+      { to: '/sales', label: 'Sales & Transactions', icon: '🧾', permission: 'finance.view' },
     ],
   },
   {

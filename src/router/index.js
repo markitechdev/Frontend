@@ -159,11 +159,17 @@ const routes = [
   },
 
   {
+    path: '/sales',
+    name: 'sales',
+    component: () => import('@/views/SalesView.vue'),
+    meta: { title: 'Sales & Transactions', permission: 'finance.view' },
+  },
+  {
     path: '/finance',
     name: 'finance',
     component: () => import('@/views/FinanceView.vue'),
-    // Finance figures come from /api/reports, so the role also needs report access
-    meta: { title: 'Financial Records', permission: 'finance.view', anyOf: ['reports.view', 'reports.generate'] },
+    // Inventory valuation comes from /api/reports, so the role also needs report access
+    meta: { title: 'Financial Reports', permission: 'finance.view', anyOf: ['reports.view', 'reports.generate'] },
   },
   {
     path: '/staff',
