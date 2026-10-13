@@ -36,7 +36,7 @@ const year = new Date().getFullYear();
           animate
           with-text
           tone="light"
-          :subtitle="variant === 'admin' ? 'System Administration' : 'Inventory Management System'"
+          :subtitle="variant === 'admin' ? 'System Administration' : 'Appliances'"
         />
       </div>
 
@@ -59,7 +59,7 @@ const year = new Date().getFullYear();
       </div>
 
       <div class="relative flex items-center justify-between text-xs text-white/70">
-        <span>&copy; {{ year }} Inventory Management System</span>
+        <span>&copy; {{ year }} Walang Brownout Appliances</span>
         <span>For authorized personnel only</span>
       </div>
     </aside>
@@ -75,7 +75,7 @@ const year = new Date().getFullYear();
               animate
               with-text
               tone="dark"
-              :subtitle="variant === 'admin' ? 'System Administration' : 'Inventory Management System'"
+              :subtitle="variant === 'admin' ? 'System Administration' : 'Appliances'"
             />
           </div>
 
@@ -84,7 +84,7 @@ const year = new Date().getFullYear();
       </div>
 
       <footer class="px-6 sm:px-12 py-5 border-t border-slate-100 text-xs text-slate-500 flex flex-wrap items-center justify-between gap-2">
-        <span>&copy; {{ year }} Inventory Management System. All rights reserved.</span>
+        <span>&copy; {{ year }} Walang Brownout Appliances. All rights reserved.</span>
         <slot name="footer" />
       </footer>
     </main>

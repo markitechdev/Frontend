@@ -37,9 +37,9 @@ const submit = async ({ email, password }) => {
 <template>
   <AuthLayout
     variant="staff"
-    eyebrow="Inventory Management System"
-    heading="Inventory and stock control for your organization."
-    description="Monitor stock levels, record stock movements and respond to reorder alerts from one workspace."
+    eyebrow="Walang Brownout Appliances"
+    heading="Appliance inventory and stock control for the store."
+    description="Monitor appliance stock levels, record stock movements and respond to reorder alerts from one workspace."
     :points="points"
   >
     <div class="mb-8">

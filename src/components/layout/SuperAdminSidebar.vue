@@ -131,9 +131,9 @@ onBeforeUnmount(() => {
           <AppLogo :size="34" />
           <div class="flex flex-col">
             <span class="text-sm font-bold tracking-tight text-white leading-tight">
-              IMS Administration
+              Walang Brownout
             </span>
-            <span class="text-[10px] font-semibold tracking-wider text-indigo-400 uppercase">
+            <span class="text-xs font-semibold tracking-wider text-indigo-400 uppercase">
               Super Admin
             </span>
           </div>
@@ -154,7 +154,7 @@ onBeforeUnmount(() => {
       <!-- Navigation Hierarchy -->
       <nav class="flex-1 px-3 py-4 space-y-6 overflow-y-auto" role="navigation">
         <div v-for="(group, gIdx) in SECTIONS" :key="gIdx" class="space-y-1">
-          <p class="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <p class="px-3 text-xs font-bold uppercase tracking-wider text-slate-400">
             {{ group.heading }}
           </p>
           <ul class="mt-1.5 space-y-1">
@@ -174,7 +174,7 @@ onBeforeUnmount(() => {
                 <span class="flex-1 truncate">{{ item.label }}</span>
                 <span
                   v-if="item.badge"
-                  class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-indigo-500/30 text-indigo-200 border border-indigo-400/30"
+                  class="px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider bg-indigo-500/30 text-indigo-200 border border-indigo-400/30"
                 >
                   {{ item.badge }}
                 </span>
@@ -200,7 +200,7 @@ onBeforeUnmount(() => {
               {{ auth.user?.fullName || auth.user?.name || 'Super Admin' }}
             </p>
             <div class="flex items-center gap-1.5 mt-0.5">
-              <span class="inline-flex items-center px-1.5 py-0.2 text-[9px] font-bold tracking-wide uppercase bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30">
+              <span class="inline-flex items-center px-1.5 py-0.2 text-xs font-bold tracking-wide uppercase bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30">
                 Super Admin
               </span>
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="Signed in" />

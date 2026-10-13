@@ -1,40 +1,41 @@
 <script setup>
 /**
- * IMS logo: an isometric box (inventory) with rising stock bars (monitoring).
- *  - `animate`  plays the build-up animation once (sides fly in, bars grow)
- *  - `withText` adds the "IMS" wordmark and a subtitle next to the mark
+ * Walang Brownout Appliances logo: a power ring with a lightning bolt striking
+ * through its gap ("the power stays on").
+ *  - `animate`  plays the build-up once (badge pops in, ring swings in, bolt strikes)
+ *  - `withText` adds the wordmark and a subtitle next to the mark
  * The animation is skipped for people who turned on "reduce motion".
  */
 defineProps({
   size: { type: Number, default: 36 },
   animate: { type: Boolean, default: false },
   withText: { type: Boolean, default: false },
-  subtitle: { type: String, default: 'Inventory Management System' },
+  subtitle: { type: String, default: 'Appliances' },
   /** 'light' text for dark backgrounds, 'dark' text for light backgrounds */
   tone: { type: String, default: 'light' },
 });
 </script>
 
 <template>
-  <span class="inline-flex items-center gap-3 min-w-0" :class="{ 'ims-logo--animate': animate }">
+  <span class="inline-flex items-center gap-3 min-w-0" :class="{ 'wb-logo--animate': animate }">
     <!-- one layer per shape, so the animation runs on the GPU -->
-    <span class="ims-logo relative shrink-0" :style="{ width: `${size}px`, height: `${size}px` }" role="img" aria-label="IMS logo">
-      <svg class="ims-face ims-left" viewBox="0 0 64 64" aria-hidden="true"><polygon points="10,18 32,30 32,56 10,44" fill="#0ea5e9" /></svg>
-      <svg class="ims-face ims-right" viewBox="0 0 64 64" aria-hidden="true"><polygon points="54,18 32,30 32,56 54,44" fill="#0369a1" /></svg>
-      <svg class="ims-face ims-top" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,6 54,18 32,30 10,18" fill="#7dd3fc" /></svg>
-      <svg class="ims-bar ims-b1" viewBox="0 0 64 64" aria-hidden="true"><polygon points="35,51.16 39,48.98 39,40.98 35,43.16" fill="#e0f2fe" /></svg>
-      <svg class="ims-bar ims-b2" viewBox="0 0 64 64" aria-hidden="true"><polygon points="41.5,47.62 45.5,45.44 45.5,32.44 41.5,34.62" fill="#e0f2fe" /></svg>
-      <svg class="ims-bar ims-b3" viewBox="0 0 64 64" aria-hidden="true"><polygon points="48,44.07 52,41.89 52,23.89 48,26.07" fill="#e0f2fe" /></svg>
+    <span class="wb-logo relative shrink-0" :style="{ width: `${size}px`, height: `${size}px` }" role="img" aria-label="Walang Brownout Appliances logo">
+      <svg class="wb-badge" viewBox="0 0 64 64" aria-hidden="true"><rect x="4" y="4" width="56" height="56" rx="15" fill="#1d4ed8" /></svg>
+      <svg class="wb-ring" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="33" r="19" fill="none" stroke="#bfdbfe" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="94 25.4" transform="rotate(-63 32 33)" /></svg>
+      <svg class="wb-bolt" viewBox="0 0 64 64" aria-hidden="true">
+        <polygon points="35.5,8 20,35 30,35 27.5,57 44,28 34.5,28" fill="#fbbf24" />
+        <polygon points="35.5,8 20,35 30,35 29,42 44,28 34.5,28" fill="#fcd34d" />
+      </svg>
     </span>
     <span v-if="withText" class="min-w-0 leading-tight">
       <span
-        class="ims-word block font-bold tracking-[0.2em]"
+        class="wb-word block font-extrabold tracking-[0.08em] whitespace-nowrap"
         :class="tone === 'light' ? 'text-white' : 'text-slate-900'"
-        :style="{ fontSize: `${Math.round(size * 0.42)}px` }"
-      >IMS</span>
+        :style="{ fontSize: `${Math.round(size * 0.31)}px` }"
+      >WALANG BROWNOUT</span>
       <span
         v-if="subtitle"
-        class="ims-sub block truncate text-xs"
+        class="wb-sub block truncate text-xs"
         :class="tone === 'light' ? 'text-white/60' : 'text-slate-500'"
       >{{ subtitle }}</span>
     </span>
@@ -42,48 +43,27 @@ defineProps({
 </template>
 
 <style scoped>
-.ims-logo svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.wb-logo svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 
-/* offsets are a share of the logo size, so every size moves the same way */
-.ims-logo--animate .ims-face {
-  opacity: 0;
-  animation: ims-face-in 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.25) forwards;
-}
-.ims-logo--animate .ims-left  { --dx: -16%; --dy: 9%;   transform-origin: 33% 58%; animation-delay: 0.05s; }
-.ims-logo--animate .ims-right { --dx: 16%;  --dy: 9%;   transform-origin: 67% 58%; animation-delay: 0.18s; }
-.ims-logo--animate .ims-top   { --dx: 0%;   --dy: -19%; transform-origin: 50% 28%; animation-delay: 0.31s; }
+.wb-logo--animate .wb-badge { opacity: 0; animation: wb-badge-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.25) forwards; }
+.wb-logo--animate .wb-ring  { opacity: 0; transform-origin: 50% 51.5%; animation: wb-ring-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s forwards; }
+.wb-logo--animate .wb-bolt  { opacity: 0; transform-origin: 55% 12%; animation: wb-bolt-in 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) 0.6s forwards; }
 
-/* bars grow from their bottom edge (origin = the bar's bottom in the 64x64 drawing) */
-.ims-logo--animate .ims-bar {
-  transform: scaleY(0);
-  animation: ims-bar-up 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) forwards;
-}
-.ims-logo--animate .ims-b1 { transform-origin: 57.8% 79.9%; animation-delay: 0.72s; }
-.ims-logo--animate .ims-b2 { transform-origin: 68% 74.4%;   animation-delay: 0.84s; }
-.ims-logo--animate .ims-b3 { transform-origin: 78.1% 68.9%; animation-delay: 0.96s; }
+.wb-logo--animate .wb-word,
+.wb-logo--animate .wb-sub { opacity: 0; animation: wb-text-in 0.5s ease-out forwards; }
+.wb-logo--animate .wb-word { animation-delay: 0.8s; }
+.wb-logo--animate .wb-sub  { animation-delay: 0.95s; }
 
-.ims-logo--animate .ims-word,
-.ims-logo--animate .ims-sub {
-  opacity: 0;
-  animation: ims-text-in 0.5s ease-out forwards;
-}
-.ims-logo--animate .ims-word { animation-delay: 0.9s; }
-.ims-logo--animate .ims-sub  { animation-delay: 1.05s; }
-
-@keyframes ims-face-in {
-  from { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.92); }
-  to   { opacity: 1; transform: none; }
-}
-@keyframes ims-bar-up { to { transform: scaleY(1); } }
-@keyframes ims-text-in {
-  from { opacity: 0; transform: translateX(-6px); }
-  to   { opacity: 1; transform: none; }
-}
+@keyframes wb-badge-in { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: none; } }
+@keyframes wb-ring-in  { from { opacity: 0; transform: rotate(-120deg) scale(0.8); } to { opacity: 1; transform: none; } }
+@keyframes wb-bolt-in  { from { opacity: 0; transform: translateY(-18%) scaleY(0.4); } 60% { opacity: 1; transform: translateY(2%) scaleY(1.06); } to { opacity: 1; transform: none; } }
+@keyframes wb-text-in  { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .ims-logo--animate .ims-face,
-  .ims-logo--animate .ims-bar,
-  .ims-logo--animate .ims-word,
-  .ims-logo--animate .ims-sub { animation: none; opacity: 1; transform: none; }
+  .wb-logo--animate .wb-badge,
+  .wb-logo--animate .wb-ring,
+  .wb-logo--animate .wb-bolt,
+  .wb-logo--animate .wb-word,
+  .wb-logo--animate .wb-sub { animation: none; opacity: 1; transform: none; }
 }
 </style>

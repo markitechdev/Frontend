@@ -141,11 +141,11 @@ onBeforeUnmount(() => {
       <RouterLink to="/dashboard" class="flex items-center gap-2.5 min-w-0" @click="emit('close')">
         <AppLogo :size="34" />
         <div class="min-w-0">
-          <p class="text-sm font-bold tracking-[0.15em] text-white leading-tight">
-            IMS
+          <p class="text-[13px] font-extrabold tracking-[0.06em] text-white leading-tight whitespace-nowrap">
+            WALANG BROWNOUT
           </p>
-          <p class="text-[10px] font-semibold text-sky-400 tracking-wide truncate mt-0.5">
-            Inventory Management
+          <p class="text-xs font-semibold text-sky-400 tracking-wide truncate mt-0.5">
+            Appliances
           </p>
         </div>
       </RouterLink>
