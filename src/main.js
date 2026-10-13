@@ -59,3 +59,18 @@ app.config.errorHandler = (err) => {
 };
 
 app.mount('#app');
+
+/* Fade out the loading screen from index.html once the first page is ready.
+   On the first visit in a tab it stays until the logo animation has played. */
+const splash = document.getElementById('ims-splash');
+if (splash) {
+  const info = window.__imsSplash || { start: Date.now(), full: false };
+  const minVisible = info.full ? 1700 : 0;
+  router.isReady().catch(() => {}).finally(() => {
+    const wait = Math.max(0, minVisible - (Date.now() - info.start));
+    setTimeout(() => {
+      splash.classList.add('ims-splash--out');
+      setTimeout(() => splash.remove(), 400);
+    }, wait);
+  });
+}

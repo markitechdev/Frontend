@@ -1,15 +1,83 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <link rel="icon" type="image/svg+xml" href="/superadmin-shield.svg" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111c2e" />
     <title>Inventory Management System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      /* Loading screen shown until the app is ready (removed by src/main.js). */
+      #ims-splash {
+        position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center;
+        background: #111c2e; font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+        transition: opacity .35s ease, visibility .35s ease;
+      }
+      #ims-splash.ims-splash--out { opacity: 0; visibility: hidden; }
+      #ims-splash .ims-s-wrap { display: flex; flex-direction: column; align-items: center; }
+      #ims-splash svg { width: 112px; height: 112px; overflow: visible; }
+      #ims-splash .ims-s-name { margin-top: 18px; padding-left: .32em; color: #fff; font-weight: 700; font-size: 26px; letter-spacing: .32em; }
+      #ims-splash .ims-s-sub { margin-top: 4px; color: rgba(255,255,255,.6); font-size: 13px; letter-spacing: .03em; }
+      #ims-splash .ims-s-track { margin-top: 22px; width: 140px; height: 2px; border-radius: 2px; background: rgba(255,255,255,.1); overflow: hidden; }
+      #ims-splash .ims-s-track i { display: block; width: 40%; height: 100%; background: #38bdf8; animation: ims-s-load 1.1s ease-in-out infinite; }
+
+      /* full build-up animation (first visit in this tab) */
+      #ims-splash.ims-splash--full .ims-s-face { transform-box: fill-box; transform-origin: center; opacity: 0; animation: ims-s-face .55s cubic-bezier(.2,.9,.3,1.25) forwards; }
+      #ims-splash.ims-splash--full .ims-s-left  { --dx: -10px; --dy: 6px;   animation-delay: .05s; }
+      #ims-splash.ims-splash--full .ims-s-right { --dx: 10px;  --dy: 6px;   animation-delay: .18s; }
+      #ims-splash.ims-splash--full .ims-s-top   { --dx: 0px;   --dy: -12px; animation-delay: .31s; }
+      #ims-splash.ims-splash--full .ims-s-bar { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); animation: ims-s-bar .45s cubic-bezier(.3,1.4,.5,1) forwards; }
+      #ims-splash.ims-splash--full .ims-s-b1 { animation-delay: .72s; }
+      #ims-splash.ims-splash--full .ims-s-b2 { animation-delay: .84s; }
+      #ims-splash.ims-splash--full .ims-s-b3 { animation-delay: .96s; }
+      #ims-splash.ims-splash--full .ims-s-name,
+      #ims-splash.ims-splash--full .ims-s-sub { opacity: 0; animation: ims-s-text .5s ease-out forwards; }
+      #ims-splash.ims-splash--full .ims-s-name { animation-delay: 1.05s; }
+      #ims-splash.ims-splash--full .ims-s-sub  { animation-delay: 1.2s; }
+
+      @keyframes ims-s-face { from { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.92); } to { opacity: 1; transform: none; } }
+      @keyframes ims-s-bar  { to { transform: scaleY(1); } }
+      @keyframes ims-s-text { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+      @keyframes ims-s-load { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+
+      @media (prefers-reduced-motion: reduce) {
+        #ims-splash * { animation: none !important; opacity: 1 !important; transform: none !important; }
+        #ims-splash .ims-s-track { display: none; }
+      }
+    </style>
   </head>
   <body>
+    <div id="ims-splash" role="status" aria-label="Loading Inventory Management System">
+      <div class="ims-s-wrap">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <polygon class="ims-s-face ims-s-left" points="10,18 32,30 32,56 10,44" fill="#0ea5e9" />
+          <polygon class="ims-s-face ims-s-right" points="54,18 32,30 32,56 54,44" fill="#0369a1" />
+          <polygon class="ims-s-face ims-s-top" points="32,6 54,18 32,30 10,18" fill="#7dd3fc" />
+          <polygon class="ims-s-bar ims-s-b1" points="35,51.16 39,48.98 39,40.98 35,43.16" fill="#e0f2fe" />
+          <polygon class="ims-s-bar ims-s-b2" points="41.5,47.62 45.5,45.44 45.5,32.44 41.5,34.62" fill="#e0f2fe" />
+          <polygon class="ims-s-bar ims-s-b3" points="48,44.07 52,41.89 52,23.89 48,26.07" fill="#e0f2fe" />
+        </svg>
+        <div class="ims-s-name">IMS</div>
+        <div class="ims-s-sub">Inventory Management System</div>
+        <div class="ims-s-track"><i></i></div>
+      </div>
+    </div>
+    <script>
+      // Full animation once per tab; later reloads just show the logo until the app is ready.
+      (function () {
+        var el = document.getElementById('ims-splash');
+        var seen = false;
+        try { seen = sessionStorage.getItem('ims_splash_seen') === '1'; sessionStorage.setItem('ims_splash_seen', '1'); } catch (e) {}
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!seen && !reduce) el.className = 'ims-splash--full';
+        window.__imsSplash = { start: Date.now(), full: !seen && !reduce };
+        // Never let the loading screen get stuck.
+        setTimeout(function () { el.classList.add('ims-splash--out'); }, 10000);
+      })();
+    </script>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
