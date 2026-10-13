@@ -42,19 +42,6 @@ onMounted(load);
 
 <template>
   <div class="space-y-5">
-    <!-- Honest scope note rather than fabricated sales figures. -->
-    <div class="card p-4 border-l-4 border-l-amber-400 bg-amber-50/50">
-      <p class="text-sm font-semibold text-slate-800">Finance Admin — partial scope</p>
-      <p class="text-sm text-slate-600 mt-1">
-        Inventory valuation and shrinkage cost below are live from the database.
-        <span class="font-medium">Sales and transaction management, financial records and
-        advanced financial reports</span> are scheduled for the finals phase — they need
-        <code class="text-xs bg-white px-1 py-0.5 rounded">transactions</code> and
-        <code class="text-xs bg-white px-1 py-0.5 rounded">sales</code> tables that the prelim
-        data architecture did not yet define.
-      </p>
-    </div>
-
     <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
       <StatCard label="Inventory Valuation" :value="loading ? '--' : pesoShort(summary?.totalValuation)" sublabel="At current unit prices" tone="green" />
       <StatCard label="Total Units" :value="loading ? '--' : num(summary?.totalUnits)" tone="blue" />
