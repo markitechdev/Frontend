@@ -281,24 +281,28 @@ onMounted(() => {
     <template v-else>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
+          :index="0"
           title="Products"
           :value="num(cards?.totalProducts)"
           subtitle="Items in the catalog"
           icon="▦"
         />
         <StatCard
+          :index="1"
           title="Stock Valuation"
           :value="peso(cards?.totalValue)"
           subtitle="Value of stock on hand"
           icon="₱"
         />
         <StatCard
+          :index="2"
           title="Total Stock Units"
           :value="num(cards?.totalQuantity)"
           subtitle="Units currently in stock"
           icon="📦"
         />
         <StatCard
+          :index="3"
           title="Low Stock"
           :value="num(cards?.lowStock)"
           subtitle="At or below minimum stock"
@@ -306,6 +310,7 @@ onMounted(() => {
           accent="warning"
         />
         <StatCard
+          :index="4"
           title="Out of Stock"
           :value="num(cards?.outOfStock)"
           subtitle="Products with no stock left"
@@ -313,6 +318,7 @@ onMounted(() => {
           accent="danger"
         />
         <StatCard
+          :index="5"
           title="Reorder Due"
           :value="num(cards?.reorderDue)"
           subtitle="At or below reorder point"
@@ -320,12 +326,14 @@ onMounted(() => {
           accent="info"
         />
         <StatCard
+          :index="6"
           title="Active Suppliers"
           :value="num(cards?.activeSuppliers)"
           subtitle="Suppliers currently active"
           icon="⛟"
         />
         <StatCard
+          :index="7"
           title="User Accounts"
           :value="num(cards?.totalUsers)"
           subtitle="Registered system users"
@@ -358,7 +366,7 @@ onMounted(() => {
                   </span>
                 </div>
                 <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div class="h-full bg-rose-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts?.critical) }" />
+                  <div class="h-full bg-rose-500 rounded-full grow-x" :style="{ width: priorityBarWidth(priorityCounts?.critical) }" />
                 </div>
               </div>
 
@@ -372,7 +380,7 @@ onMounted(() => {
                   </span>
                 </div>
                 <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div class="h-full bg-amber-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts?.high) }" />
+                  <div class="h-full bg-amber-500 rounded-full grow-x" :style="{ width: priorityBarWidth(priorityCounts?.high) }" />
                 </div>
               </div>
 
@@ -386,7 +394,7 @@ onMounted(() => {
                   </span>
                 </div>
                 <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div class="h-full bg-blue-500 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts?.medium) }" />
+                  <div class="h-full bg-blue-500 rounded-full grow-x" :style="{ width: priorityBarWidth(priorityCounts?.medium) }" />
                 </div>
               </div>
 
@@ -400,7 +408,7 @@ onMounted(() => {
                   </span>
                 </div>
                 <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div class="h-full bg-slate-400 rounded-full transition-all duration-300" :style="{ width: priorityBarWidth(priorityCounts?.low) }" />
+                  <div class="h-full bg-slate-400 rounded-full grow-x" :style="{ width: priorityBarWidth(priorityCounts?.low) }" />
                 </div>
               </div>
             </div>

@@ -7,6 +7,8 @@ import { useDashboardStore } from '@/stores/dashboard';
 import Skeleton from '@/components/ui/Skeleton.vue';
 import StatusBadge from '@/components/ui/StatusBadge.vue';
 import StatCardSkeleton from '@/components/ui/StatCardSkeleton.vue';
+import AnimatedNumber from '@/components/ui/AnimatedNumber.vue';
+import { actionLabel } from '@/utils/auditLabels';
 
 const auth = useAuthStore();
 const toast = useToastStore();
@@ -89,7 +91,10 @@ onMounted(() => load(false));
 <template>
   <div class="space-y-6">
     <!-- Operational Command Greeting Banner -->
-    <div class="rounded-2xl bg-white border border-slate-200/90 p-5 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white via-white to-sky-50 p-5 sm:p-6 shadow-sm">
+      <div aria-hidden="true" class="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-sky-300/30 blur-3xl float-wide" />
+      <div aria-hidden="true" class="pointer-events-none absolute right-1/3 -bottom-32 h-56 w-56 rounded-full bg-emerald-300/20 blur-3xl float-wide-r" />
+      <div class="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div>
         <div class="flex items-center gap-2">
           <span class="text-[11px] font-bold tracking-widest text-sky-700 uppercase">
@@ -115,12 +120,16 @@ onMounted(() => load(false));
           class="btn-ghost btn-sm"
           :disabled="dashboardStore.loading"
           @click="load(true)"
-          title="Sync latest inventory telemetry"
+          title="Refresh the dashboard figures"
         >
           <svg :class="['w-3.5 h-3.5', dashboardStore.loading ? 'animate-spin text-sky-600' : 'text-slate-500']" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          <span>{{ dashboardStore.loading ? 'Updating…' : 'Sync Telemetry' }}</span>
+          <!-- both labels share one cell, so the button keeps its width (no layout shift) -->
+          <span class="grid justify-items-center">
+            <span class="col-start-1 row-start-1" :class="{ invisible: dashboardStore.loading }">Refresh</span>
+            <span class="col-start-1 row-start-1" :class="{ invisible: !dashboardStore.loading }">Refreshing…</span>
+          </span>
         </button>
 
         <RouterLink
@@ -138,6 +147,7 @@ onMounted(() => load(false));
         >
           <span>⇄ Movement Ledger</span>
         </RouterLink>
+      </div>
       </div>
     </div>
 
@@ -185,14 +195,14 @@ onMounted(() => load(false));
       <!-- Varied Operational KPI Cards Hierarchy -->
       <!-- Account-focused roles (e.g. Staff Admin) do not receive inventory figures -->
       <div v-if="!hasInventory" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <div v-if="cards.totalUsers !== undefined" class="card p-4 border-l-4 border-l-sky-500">
+        <div v-if="cards.totalUsers !== undefined" class="card lift anim-rise p-4 border-l-4 border-l-sky-500" style="--d: 0">
           <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Accounts</span>
-          <p class="text-2xl font-black text-slate-900 tracking-tight mt-2">{{ num(cards.totalUsers) }}</p>
+          <p class="text-2xl font-black text-slate-900 tracking-tight mt-2"><AnimatedNumber :value="cards.totalUsers" /></p>
           <p class="text-[11px] text-slate-500 font-medium mt-0.5">Users who can currently sign in</p>
         </div>
-        <div v-if="cards.activeSuppliers !== undefined" class="card p-4 border-l-4 border-l-slate-700">
+        <div v-if="cards.activeSuppliers !== undefined" class="card lift anim-rise p-4 border-l-4 border-l-slate-700" style="--d: 1">
           <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Active Suppliers</span>
-          <p class="text-2xl font-black text-slate-900 tracking-tight mt-2">{{ num(cards.activeSuppliers) }}</p>
+          <p class="text-2xl font-black text-slate-900 tracking-tight mt-2"><AnimatedNumber :value="cards.activeSuppliers" /></p>
         </div>
         <div v-if="cards.totalUsers === undefined && cards.activeSuppliers === undefined" class="card p-5 sm:col-span-2 lg:col-span-4 text-sm text-slate-500">
           Your role has no dashboard figures yet. Use the sidebar to open the modules you have access to.
@@ -200,16 +210,16 @@ onMounted(() => load(false));
       </div>
       <div v-else class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <!-- 1. Catalog Products Volume (Primary Card) -->
-        <div class="card p-4 border-l-4 border-l-sky-500 flex flex-col justify-between">
+        <div class="group card lift anim-rise p-4 border-l-4 border-l-sky-500 flex flex-col justify-between" style="--d: 0">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Catalog</span>
-            <span class="h-7 w-7 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center text-xs font-bold border border-sky-100">
-              📦
+            <span class="h-8 w-8 rounded-lg bg-sky-50 text-sky-700 border-sky-100 flex items-center justify-center border transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" aria-hidden="true">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" /><path d="m3 8 9 5 9-5" /><path d="M12 13v8" /></svg>
             </span>
           </div>
           <div class="mt-2">
             <p class="text-2xl font-black text-slate-900 tracking-tight">
-              {{ num(cards.totalProducts) }}
+              <AnimatedNumber :value="cards.totalProducts" />
             </p>
             <p class="text-[11px] text-slate-500 font-medium mt-0.5">
               {{ cards.totalQuantity !== undefined ? `${num(cards.totalQuantity)} units physical stock` : 'Physical stock units' }}
@@ -218,16 +228,16 @@ onMounted(() => load(false));
         </div>
 
         <!-- 2. Inventory Valuation (Capital Card) -->
-        <div class="card p-4 border-l-4 border-l-emerald-500 flex flex-col justify-between">
+        <div class="group card lift anim-rise p-4 border-l-4 border-l-emerald-500 flex flex-col justify-between" style="--d: 1">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Stock Capital Valuation</span>
-            <span class="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center text-xs font-bold border border-emerald-100">
-              💰
+            <span class="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-700 border-emerald-100 flex items-center justify-center border transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" aria-hidden="true">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h15a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7Z" /><path d="M3 7V6a2 2 0 0 1 2-2h11" /><circle cx="16.5" cy="13.5" r="1.5" /></svg>
             </span>
           </div>
           <div class="mt-2">
             <p class="text-2xl font-black text-slate-900 tracking-tight">
-              {{ peso(cards.totalValue) }}
+              <AnimatedNumber :value="cards.totalValue" :format="peso" />
             </p>
             <p class="text-[11px] text-slate-500 font-medium mt-0.5">
               Aggregate unit inventory asset valuation
@@ -236,45 +246,45 @@ onMounted(() => load(false));
         </div>
 
         <!-- 3. Stock Depletion Status Strip (Warning/Action Card) -->
-        <div class="card p-4 border-l-4 border-l-amber-500 flex flex-col justify-between">
+        <div class="group card lift anim-rise p-4 border-l-4 border-l-amber-500 flex flex-col justify-between" style="--d: 2">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Stock Warning Strip</span>
-            <span class="h-7 w-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center text-xs font-bold border border-amber-100">
-              ⚠️
+            <span class="h-8 w-8 rounded-lg bg-amber-50 text-amber-700 border-amber-100 flex items-center justify-center border transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" aria-hidden="true">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20L12 3Z" /><path d="M12 10v4" /><path d="M12 17h.01" /></svg>
             </span>
           </div>
           <div class="grid grid-cols-2 gap-2 mt-2 pt-1 border-t border-slate-100">
             <div>
               <span class="text-[10px] uppercase font-bold text-amber-700 block">Low Stock</span>
-              <p class="text-lg font-bold text-slate-900">{{ num(cards.lowStock) }}</p>
+              <p class="text-lg font-bold text-slate-900"><AnimatedNumber :value="cards.lowStock" /></p>
             </div>
             <div>
               <span class="text-[10px] uppercase font-bold text-rose-700 block">Out of Stock</span>
-              <p class="text-lg font-bold text-slate-900">{{ num(cards.outOfStock) }}</p>
+              <p class="text-lg font-bold text-slate-900"><AnimatedNumber :value="cards.outOfStock" /></p>
             </div>
           </div>
         </div>
 
         <!-- 4. Shrinkage / Operational Network (Loss & Logistics Card) -->
-        <div class="card p-4 border-l-4 border-l-slate-700 flex flex-col justify-between">
+        <div class="group card lift anim-rise p-4 border-l-4 border-l-slate-700 flex flex-col justify-between" style="--d: 3">
           <div class="flex items-center justify-between">
             <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Operations Network</span>
-            <span class="h-7 w-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-bold border border-slate-200">
-              🚚
+            <span class="h-8 w-8 rounded-lg bg-slate-100 text-slate-700 border-slate-200 flex items-center justify-center border transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6" aria-hidden="true">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h11v10H3z" /><path d="M14 9h4l3 3v4h-7z" /><circle cx="7" cy="17.5" r="1.5" /><circle cx="17" cy="17.5" r="1.5" /></svg>
             </span>
           </div>
           <div class="mt-2 flex items-center justify-between pt-1 border-t border-slate-100">
             <div>
               <span class="text-[10px] uppercase font-bold text-slate-500 block">Suppliers</span>
-              <p class="text-base font-bold text-slate-900">{{ num(cards.activeSuppliers) }}</p>
+              <p class="text-base font-bold text-slate-900"><AnimatedNumber :value="cards.activeSuppliers" /></p>
             </div>
             <div class="text-right">
               <span class="text-[10px] uppercase font-bold text-slate-500 block">Reorder Due</span>
-              <p class="text-base font-bold text-sky-700">{{ num(cards.reorderDue) }}</p>
+              <p class="text-base font-bold text-sky-700"><AnimatedNumber :value="cards.reorderDue" /></p>
             </div>
             <div v-if="cards.shrinkageUnits30d !== undefined" class="text-right">
               <span class="text-[10px] uppercase font-bold text-rose-700 block">Shrinkage</span>
-              <p class="text-base font-bold text-slate-900">{{ num(cards.shrinkageUnits30d) }}</p>
+              <p class="text-base font-bold text-slate-900"><AnimatedNumber :value="cards.shrinkageUnits30d" /></p>
             </div>
           </div>
         </div>
@@ -295,7 +305,7 @@ onMounted(() => load(false));
       <!-- Main Operational Split Grids -->
       <div class="grid gap-5 lg:grid-cols-3">
         <!-- Stock Depletion / Items Needing Action Table -->
-        <div v-if="panels.lowStockItems" class="card lg:col-span-2">
+        <div v-if="panels.lowStockItems" class="card anim-rise lg:col-span-2" style="--d: 4">
           <div class="card-header">
             <div class="flex items-center gap-2">
               <span class="text-base">🚨</span>
@@ -322,7 +332,7 @@ onMounted(() => load(false));
                     All inventory catalog items are currently above safety thresholds.
                   </td>
                 </tr>
-                <tr v-for="it in panels.lowStockItems" :key="it.productId" class="hover:bg-slate-50/80">
+                <tr v-for="(it, i) in panels.lowStockItems" :key="it.productId" class="anim-fade-wide hover:bg-slate-50/80 transition-colors" :style="{ '--d': 5 + Math.min(i, 8) }">
                   <td class="font-mono text-xs font-bold text-slate-600">{{ it.sku }}</td>
                   <td class="font-semibold text-slate-900">
                     <RouterLink :to="`/inventory/${it.productId}`" class="hover:text-sky-600 hover:underline">
@@ -339,7 +349,7 @@ onMounted(() => load(false));
         </div>
 
         <!-- Alerts by Priority -->
-        <div v-if="panels.alertsByPriority" class="card">
+        <div v-if="panels.alertsByPriority" class="card anim-rise" style="--d: 5">
           <div class="card-header">
             <div class="flex items-center gap-2">
               <span class="text-base">⚡</span>
@@ -351,9 +361,10 @@ onMounted(() => load(false));
           </div>
           <div class="card-body space-y-4">
             <div
-              v-for="(count, level) in panels.alertsByPriority"
+              v-for="(count, level, i) in panels.alertsByPriority"
               :key="level"
               class="group relative"
+              :style="{ '--d': 6 + i }"
             >
               <div class="flex items-center justify-between text-xs mb-1.5 font-bold">
                 <StatusBadge :status="level" />
@@ -364,7 +375,7 @@ onMounted(() => load(false));
               </div>
               <div class="h-2 rounded-full bg-slate-100 overflow-hidden relative">
                 <div
-                  class="h-full rounded-full transition-all duration-500 ease-out"
+                  class="h-full rounded-full grow-x"
                   :class="{
                     'bg-rose-500': level === 'critical',
                     'bg-amber-500': level === 'high',
@@ -382,7 +393,7 @@ onMounted(() => load(false));
         </div>
 
         <!-- Recent Stock Movements Stream -->
-        <div v-if="panels.recentMovements" class="card lg:col-span-2">
+        <div v-if="panels.recentMovements" class="card anim-rise lg:col-span-2" style="--d: 6">
           <div class="card-header">
             <div class="flex items-center gap-2">
               <span class="text-base">🔄</span>
@@ -409,7 +420,7 @@ onMounted(() => load(false));
                     No movement ledger entries recorded yet.
                   </td>
                 </tr>
-                <tr v-for="m in panels.recentMovements" :key="m.movement_id" class="hover:bg-slate-50/80">
+                <tr v-for="(m, i) in panels.recentMovements" :key="m.movement_id" class="anim-fade-wide hover:bg-slate-50/80 transition-colors" :style="{ '--d': 7 + Math.min(i, 8) }">
                   <td class="text-xs font-mono text-slate-500 whitespace-nowrap">{{ when(m.date_recorded) }}</td>
                   <td>
                     <p class="font-bold text-slate-900 leading-tight">{{ m.product?.product_name }}</p>
@@ -427,7 +438,7 @@ onMounted(() => load(false));
         </div>
 
         <!-- Users by Role Distribution -->
-        <div v-if="panels.usersByRole" class="card">
+        <div v-if="panels.usersByRole" class="card anim-rise" style="--d: 7">
           <div class="card-header">
             <div class="flex items-center gap-2">
               <span class="text-base">👥</span>
@@ -438,7 +449,7 @@ onMounted(() => load(false));
             <div
               v-for="r in panels.usersByRole"
               :key="r.roleCode"
-              class="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 border border-slate-100"
+              class="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 border border-slate-100 transition-colors hover:bg-white hover:border-slate-200"
             >
               <div class="flex items-center gap-1.5 font-bold text-slate-800">
                 <span>{{ getRoleDisplay(r.roleCode, r.roleName).icon }}</span>
@@ -450,7 +461,7 @@ onMounted(() => load(false));
         </div>
 
         <!-- Recent System Activity Audit -->
-        <div v-if="panels.recentActivity" class="card lg:col-span-3">
+        <div v-if="panels.recentActivity" class="card anim-rise lg:col-span-3" style="--d: 8">
           <div class="card-header">
             <div class="flex items-center gap-2">
               <span class="text-base">📜</span>
@@ -465,12 +476,13 @@ onMounted(() => load(false));
               No recent audit trail entries logged.
             </div>
             <div
-              v-for="log in panels.recentActivity"
+              v-for="(log, i) in panels.recentActivity"
               :key="log.log_id"
-              class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs"
+              class="anim-fade-wide flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs transition-colors hover:bg-white hover:border-slate-200"
+              :style="{ '--d': 9 + Math.min(i, 8) }"
             >
               <div class="flex items-center gap-2.5 min-w-0">
-                <span class="badge-cyan shrink-0">{{ log.action.replace(/_/g, ' ') }}</span>
+                <span class="badge-cyan shrink-0" :title="log.action">{{ actionLabel(log.action) }}</span>
                 <span class="font-bold text-slate-900 truncate">{{ log.user?.full_name || 'System Operator' }}</span>
                 <span class="text-slate-500 font-mono text-[11px] truncate">#{{ log.entity_type }}</span>
               </div>
