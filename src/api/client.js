@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { createHttp } from './http.js';
 import { getSession, setSession, getActiveContext } from './session.js';
 
 // Production builds must be given VITE_API_BASE_URL (e.g. https://your-api.vercel.app/api).
@@ -9,14 +9,14 @@ if (!configuredBase && !import.meta.env.DEV) {
 }
 const baseURL = configuredBase || (import.meta.env.DEV ? 'http://localhost:4000/api' : '/api');
 
-const api = axios.create({
+const api = createHttp({
   baseURL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 20000,
 });
 
 // A bare client for token refresh, so refresh calls never loop through the interceptors below.
-const bare = axios.create({ baseURL, headers: { 'Content-Type': 'application/json' }, timeout: 15000 });
+const bare = createHttp({ baseURL, headers: { 'Content-Type': 'application/json' }, timeout: 15000 });
 
 const AUTH_PATHS = /\/(super-admin\/)?auth\/(login|refresh|logout)$/;
 const isAuthCall = (config) => AUTH_PATHS.test(config?.url || '');
